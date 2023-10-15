@@ -5,8 +5,8 @@
 // @author       bambooGHT
 // @description  播放跟下载功能,有下载进度,后续会添加列表页面批量下载的功能
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
-// @downloadURL
-// @updateURL
+// @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
+// @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @match        https://canan8181.com/*
 // @match        https://rnqq.jp/*
 // @match        https://kemomimirefle.net/*

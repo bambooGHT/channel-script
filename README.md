@@ -1,5 +1,5 @@
 channel script
-### [install]()
+### [install](https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js)
 
 ### Features
 

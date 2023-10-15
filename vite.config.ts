@@ -21,8 +21,8 @@ export default defineConfig({
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
         grant: "none",
-        updateURL: "",
-        downloadURL: ""
+        updateURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js",
+        downloadURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js"
       },
       server: {
         open: false
