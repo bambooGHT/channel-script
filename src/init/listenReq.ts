@@ -5,17 +5,15 @@ type Condition = {
   callback: ListenReqFun;
 };
 
-export const listenReq = (conditions: Condition[]) => {
+export const listenReq = (includesValue: string[], conditions: Condition[]) => {
   const originalOpen = XMLHttpRequest.prototype.open;
   const originalSend = XMLHttpRequest.prototype.send;
   const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
-  const includesValue = conditions[0].value;
-  let Authorization = "";
-
   XMLHttpRequest.prototype.setRequestHeader = function (hander, value) {
-    if (this._url.includes(includesValue) && hander === "Authorization") {
-      Authorization = value;
+    if (includesValue.some(p => this._url.includes(p))) {
+      if (hander === "Authorization") window.Authorization = value;
+      if (hander === "Fc_site_id" || hander === "fc_site_id") window.fcId = value;
     }
     setRequestHeader.apply(this, arguments as any);
   };
@@ -31,9 +29,14 @@ export const listenReq = (conditions: Condition[]) => {
     for (const item of conditions) {
       if (_url.includes(item.value)) {
         this.addEventListener('load', function () {
+          if (!window.Authorization) {
+            alert("需要登录才能使用");
+            return;
+          }
+
           window.apiPrefix = _url.split("fc/")[0];
           const data = JSON.parse(this.response);
-          item.callback(data, Authorization);
+          item.callback(data);
         });
       }
     }

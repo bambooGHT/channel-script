@@ -1,4 +1,4 @@
-export type ListenReqFun = (data: any, token: string, retry?: number) => void;
+export type ListenReqFun = (data: any, retry?: number) => void;
 
 export type ResolutionUrls = { resolution: string, url: string; }[];
 

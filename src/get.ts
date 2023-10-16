@@ -19,7 +19,7 @@ export const getKey = async (m3u8Data: string) => {
 };
 
 export const getResolutionUrls = (m3u8Data: string) => {
-  const urlArray = m3u8Data.split("\n").filter(s => s.includes("http")).slice(1);
+  const urlArray = m3u8Data.split("\n").filter(s => s.includes("https"));
   const RESOLUTIONS = m3u8Data.split("\n").filter(s => s.includes("RESOLUTION"));
 
   return RESOLUTIONS.reduce((result: ResolutionUrls, p, index) => {
@@ -52,32 +52,59 @@ export const clacSize = (size: number) => {
   return `${(size / Math.pow(bye, i)).toFixed(2)}${aMultiples[i]}`;
 };
 
+export const getM3u8Data = async (id: string) => {
+  const url = `${window.apiPrefix}fc/video_pages/${id}/session_ids`;
 
-const headersData = {
-  'Accept': 'application/json, text/plain, */*',
-  'Content-Type': 'application/json',
-  'Fc_site_id': '1',
-  'Fc_use_device': 'null',
-};
-
-export const getM3u8Data = async (token: string) => {
-  const headers = {
-    ...headersData,
-    Authorization: token
-  };
-
-  const videoId = document.URL.split("video/")[1];
-  const url = `${window.apiPrefix}fc/video_pages/${videoId}/session_ids`;
-
-  const { data: { session_id } } = await (await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({}),
-    credentials: 'include',
-  })).json();
+  const { data: { session_id } } = await req(url, "POST");
 
   const url2 = `https://hls-auth.cloud.stream.co.jp/auth/index.m3u8?session_id=${session_id}`;
   const m3u8Data = await (await fetch(url2)).text();
 
   return m3u8Data;
+};
+
+export const getM3u8HighUrl = async (id: string) => {
+  const m3u8Data = await getM3u8Data(id);
+  const urls = getResolutionUrls(m3u8Data);
+  return urls[0].url;
+};
+
+
+export const processName = (time: string, title: string) => {
+  return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
+};
+
+export const getList = async (type: string, len: number) => {
+  const list: any[] = [];
+  for (let index = 1; index <= len; index++) {
+    const apiPrefix = `${window.apiPrefix}fc/fanclub_sites/${window.fcId}/`;
+    const url = type === "lives" ? `${apiPrefix}live_pages?page=1&live_type=3&per_page=100`
+      : `${apiPrefix}video_pages?vod_type=0&sort=-display_date&page=${index}&per_page=100`;
+    const { data: { video_pages } } = await req(url);
+    list.push(...video_pages.list);
+  }
+  return list;
+};
+
+const req = async (url: string, method = "GET") => {
+  const ops: ObjIndex = {
+    method,
+    headers: getHeaders(),
+    credentials: 'include',
+  };
+  if (method === "POST") {
+    ops.body = JSON.stringify({});
+  }
+  return (await fetch(url, ops)).json();
+};
+
+const getHeaders = () => {
+  const headersData = {
+    'Accept': 'application/json, text/plain, */*',
+    'Content-Type': 'application/json',
+    'Fc_site_id': window.fcId,
+    'Fc_use_device': 'null',
+    Authorization: window.Authorization
+  };
+  return headersData;
 };

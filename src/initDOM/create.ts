@@ -13,16 +13,17 @@ export const createDOM = (name: string, fun?: () => void) => {
   return newElement;
 };
 
-export const createDivBox = () => {
+export const createDivBox = (margin?: string) => {
   const dom = document.createElement("div");
+  if (margin) dom.style.margin = margin;
   dom.classList.add("flex1");
   return dom;
 };
 
-export const progress = (parentElement: HTMLDivElement) => {
-  const firstElement = parentElement.children[1];
+export const progress = (parentElement: HTMLDivElement, len: number, isMultiple: boolean, margin: string, index = 1) => {
+  const firstElement = parentElement.children[index];
   const dom = createDOM("");
-  dom.style.margin = "0 0 7px 0";
+  dom.style.margin =margin;
   dom.style.padding = "0 5px";
 
   parentElement.insertBefore(dom, firstElement);
@@ -38,7 +39,7 @@ export const progress = (parentElement: HTMLDivElement) => {
 
   return {
     remove,
-    fn: (len: number, isMultiple: boolean) => {
+    fn: () => {
       dom.innerHTML = `下载中 0 / ${len} (0)`;
 
       const updateLen = (value: number) => {
@@ -79,4 +80,19 @@ export const progress = (parentElement: HTMLDivElement) => {
       };
     }
   };
+};
+
+export const createInput = (type: string) => {
+  const input = document.createElement("input");
+  input.type = type;
+  input.style.display = "block";
+  input.style.position = "absolute";
+  input.style.width = "19px";
+  input.style.height = "19px";
+  input.style.top = "0";
+  input.style.right = "0";
+  input.style.margin = "12px";
+  input.style.zIndex = "99999";
+
+  return input;
 };

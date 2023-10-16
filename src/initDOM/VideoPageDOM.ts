@@ -1,49 +1,29 @@
 import type { ResolutionUrls } from "../types";
 import type { ListenReqFun } from "../types";
 import { createDOM, createDivBox, progress } from "./create";
-import { getResolutionUrls, getM3u8Data } from "../get";
+import { getResolutionUrls, getM3u8Data, processName } from "../get";
 import { initVideo } from "./Play";
 import { download1 } from "../download";
 
-type VideoStatus = {
-  data: {
-    video_page: {
-      closed_at: null;
-      content_pf_unpublic_status: null;
-      released_at: string;
-      video_page_public_status: {
-        display_name: string;
-        id: number;
-      };
-    };
-  };
-};
-
-type M3u8 = {
-  currentIndex: number;
-  urls: ResolutionUrls;
-};
-
-export const videoPageDOM: ListenReqFun = (data: VideoStatus, token, retry = 0) => {
+export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) => {
   if (document.querySelector("#downloadDOM")) return;
 
-  return new Promise(async (res) => {
-    let parentElement: any = document.querySelector("#video-page-wrapper")?.children[1];
-    if (parentElement) {
-      if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
-      const time = data.data.video_page.released_at.split(" ")[0];
-      const title = `[${time}] ${document.title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
-      const m3u8 = await getM3u8Data(token);
-      addPageDOM(title, parentElement, m3u8);
-      return;
-    }
+  let parentElement: any = document.querySelector("#video-page-wrapper")?.children[1];
+  if (parentElement) {
+    if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
 
-    if (retry++ > 5) return;
+    const title = processName(data.data.video_page.released_at, document.title);
+    const videoId = document.URL.split("video/")[1];
+    const m3u8 = await getM3u8Data(videoId);
+    addPageDOM(title, parentElement, m3u8);
 
-    setTimeout(() => {
-      res(videoPageDOM(data, token, retry));
-    }, 300);
-  });
+    return;
+  }
+  if (retry++ > 5) return;
+
+  setTimeout(() => {
+    videoPageDOM(data, retry);
+  }, 300);
 };
 
 const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: string) => {
@@ -69,15 +49,15 @@ const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: stri
     }
 
     isDown = true;
-    const p = progress(parentElement);
+    const p = progress(parentElement, 0, false, "0 0 7px 0");
 
     try {
       await download1({ title, url: m3u8.urls[m3u8.currentIndex].url }, p.fn);
     } catch (error) {
+      console.warn(error);
       p.remove(2000);
     }
 
-    isDown = false;
   }));
 
   parentElement.insertBefore(dom, firstElement);
@@ -100,4 +80,23 @@ const sharpnessSelectDOM = (m3u8: M3u8) => {
   };
 
   return select;
+};
+
+type VideoStatus = {
+  data: {
+    video_page: {
+      closed_at: null;
+      content_pf_unpublic_status: null;
+      released_at: string;
+      video_page_public_status: {
+        display_name: string;
+        id: number;
+      };
+    };
+  };
+};
+
+type M3u8 = {
+  currentIndex: number;
+  urls: ResolutionUrls;
 };

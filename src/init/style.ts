@@ -22,7 +22,7 @@ input:checked + label > div {
   background: #ffb8b8 !important;
 }
 .s1{
-  background: linear-gradient(117.03deg, #119cb9 0%, #51EEC8 100%);
+  background: linear-gradient(117.03deg, #139cb9 0%, #0ed9a8 100%);
   color: #FFFFFF;
   cursor: pointer;
 }
@@ -66,7 +66,7 @@ input:checked + label > div {
   margin-right: 7px;
 }
 .sharpnessSelect {
-  background: linear-gradient(117.03deg, #119cb9 0%, #51EEC8 100%);
+  background: linear-gradient(117.03deg, #139cb9 0%, #0ed9a8 100%);
   outline: 0;
   cursor: pointer;
   border: 0;
@@ -82,7 +82,7 @@ input:checked + label > div {
   const style = document.createElement("style");
   style.innerHTML = css;
   document.head.appendChild(style);
-  
+
   const style1 = document.createElement("style");
   style1.innerHTML = `.vjs-svg-icon {
   display: inline-block;

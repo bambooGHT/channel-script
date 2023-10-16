@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.0
+// @version      1.1
 // @author       bambooGHT
-// @description  播放跟下载功能,有下载进度,后续会添加列表页面批量下载的功能
+// @description  播放跟下载功能,有下载进度,支持列表页面批量下载
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -42,7 +42,7 @@ input:checked + label > div {
   background: #ffb8b8 !important;
 }
 .s1{
-  background: linear-gradient(117.03deg, #119cb9 0%, #51EEC8 100%);
+  background: linear-gradient(117.03deg, #139cb9 0%, #0ed9a8 100%);
   color: #FFFFFF;
   cursor: pointer;
 }
@@ -86,7 +86,7 @@ input:checked + label > div {
   margin-right: 7px;
 }
 .sharpnessSelect {
-  background: linear-gradient(117.03deg, #119cb9 0%, #51EEC8 100%);
+  background: linear-gradient(117.03deg, #139cb9 0%, #0ed9a8 100%);
   outline: 0;
   cursor: pointer;
   border: 0;
@@ -2038,15 +2038,16 @@ video::-webkit-media-text-track-display {
 }`;
     document.head.appendChild(style1);
   };
-  const listenReq = (conditions) => {
+  const listenReq = (includesValue, conditions) => {
     const originalOpen = XMLHttpRequest.prototype.open;
     const originalSend = XMLHttpRequest.prototype.send;
     const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
-    const includesValue = conditions[0].value;
-    let Authorization = "";
     XMLHttpRequest.prototype.setRequestHeader = function(hander, value) {
-      if (this._url.includes(includesValue) && hander === "Authorization") {
-        Authorization = value;
+      if (includesValue.some((p) => this._url.includes(p))) {
+        if (hander === "Authorization")
+          window.Authorization = value;
+        if (hander === "Fc_site_id" || hander === "fc_site_id")
+          window.fcId = value;
       }
       setRequestHeader.apply(this, arguments);
     };
@@ -2059,9 +2060,13 @@ video::-webkit-media-text-track-display {
       for (const item of conditions) {
         if (_url.includes(item.value)) {
           this.addEventListener("load", function() {
+            if (!window.Authorization) {
+              alert("需要登录才能使用");
+              return;
+            }
             window.apiPrefix = _url.split("fc/")[0];
             const data = JSON.parse(this.response);
-            item.callback(data, Authorization);
+            item.callback(data);
           });
         }
       }
@@ -2097,7 +2102,7 @@ video::-webkit-media-text-track-display {
     })).arrayBuffer();
   };
   const getResolutionUrls = (m3u8Data) => {
-    const urlArray = m3u8Data.split("\n").filter((s) => s.includes("http")).slice(1);
+    const urlArray = m3u8Data.split("\n").filter((s) => s.includes("https"));
     const RESOLUTIONS = m3u8Data.split("\n").filter((s) => s.includes("RESOLUTION"));
     return RESOLUTIONS.reduce((result, p, index) => {
       const [resolution] = p.match(new RegExp("(?<=RESOLUTION=).*?(?=,)"));
@@ -2121,28 +2126,51 @@ video::-webkit-media-text-track-display {
     }
     return `${(size / Math.pow(bye, i)).toFixed(2)}${aMultiples[i]}`;
   };
-  const headersData = {
-    "Accept": "application/json, text/plain, */*",
-    "Content-Type": "application/json",
-    "Fc_site_id": "1",
-    "Fc_use_device": "null"
-  };
-  const getM3u8Data = async (token) => {
-    const headers = {
-      ...headersData,
-      Authorization: token
-    };
-    const videoId = document.URL.split("video/")[1];
-    const url = `${window.apiPrefix}fc/video_pages/${videoId}/session_ids`;
-    const { data: { session_id } } = await (await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({}),
-      credentials: "include"
-    })).json();
+  const getM3u8Data = async (id) => {
+    const url = `${window.apiPrefix}fc/video_pages/${id}/session_ids`;
+    const { data: { session_id } } = await req(url, "POST");
     const url2 = `https://hls-auth.cloud.stream.co.jp/auth/index.m3u8?session_id=${session_id}`;
     const m3u8Data = await (await fetch(url2)).text();
     return m3u8Data;
+  };
+  const getM3u8HighUrl = async (id) => {
+    const m3u8Data = await getM3u8Data(id);
+    const urls = getResolutionUrls(m3u8Data);
+    return urls[0].url;
+  };
+  const processName = (time, title) => {
+    return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
+  };
+  const getList = async (type, len) => {
+    const list = [];
+    for (let index = 1; index <= len; index++) {
+      const apiPrefix = `${window.apiPrefix}fc/fanclub_sites/${window.fcId}/`;
+      const url = type === "lives" ? `${apiPrefix}live_pages?page=1&live_type=3&per_page=100` : `${apiPrefix}video_pages?vod_type=0&sort=-display_date&page=${index}&per_page=100`;
+      const { data: { video_pages } } = await req(url);
+      list.push(...video_pages.list);
+    }
+    return list;
+  };
+  const req = async (url, method = "GET") => {
+    const ops = {
+      method,
+      headers: getHeaders(),
+      credentials: "include"
+    };
+    if (method === "POST") {
+      ops.body = JSON.stringify({});
+    }
+    return (await fetch(url, ops)).json();
+  };
+  const getHeaders = () => {
+    const headersData = {
+      "Accept": "application/json, text/plain, */*",
+      "Content-Type": "application/json",
+      "Fc_site_id": window.fcId,
+      "Fc_use_device": "null",
+      Authorization: window.Authorization
+    };
+    return headersData;
   };
   const createDOM = (name, fun) => {
     const DOM = `<div class="m1 m3 s1 s2">
@@ -2154,15 +2182,17 @@ video::-webkit-media-text-track-display {
     newElement.onclick = fun || null;
     return newElement;
   };
-  const createDivBox = () => {
+  const createDivBox = (margin) => {
     const dom = document.createElement("div");
+    if (margin)
+      dom.style.margin = margin;
     dom.classList.add("flex1");
     return dom;
   };
-  const progress = (parentElement) => {
-    const firstElement = parentElement.children[1];
+  const progress = (parentElement, len, isMultiple, margin, index = 1) => {
+    const firstElement = parentElement.children[index];
     const dom = createDOM("");
-    dom.style.margin = "0 0 7px 0";
+    dom.style.margin = margin;
     dom.style.padding = "0 5px";
     parentElement.insertBefore(dom, firstElement);
     let i = 0;
@@ -2174,7 +2204,7 @@ video::-webkit-media-text-track-display {
     };
     return {
       remove,
-      fn: (len, isMultiple) => {
+      fn: () => {
         dom.innerHTML = `下载中 0 / ${len} (0)`;
         const updateLen = (value) => {
           if (!isMultiple)
@@ -2217,6 +2247,19 @@ video::-webkit-media-text-track-display {
         };
       }
     };
+  };
+  const createInput = (type) => {
+    const input = document.createElement("input");
+    input.type = type;
+    input.style.display = "block";
+    input.style.position = "absolute";
+    input.style.width = "19px";
+    input.style.height = "19px";
+    input.style.top = "0";
+    input.style.right = "0";
+    input.style.margin = "12px";
+    input.style.zIndex = "99999";
+    return input;
   };
   const initVideo = (m3u8Data, element) => {
     if (element.querySelector("#myVideo"))
@@ -2283,38 +2326,44 @@ video::-webkit-media-text-track-display {
     }
     return uint8Array;
   }
-  const download1 = async (data, progress2) => {
-    const dir = await showDirectoryPicker({ mode: "readwrite" });
-    let updateProgress = {};
-    const save = async (title, url) => {
+  const download1 = async (data, progress2, name) => {
+    let dir = await showDirectoryPicker({ mode: "readwrite" });
+    let updateProgress = progress2();
+    const isExists = async (title) => {
       try {
         const fileHandle = await dir.getFileHandle(title);
         const file = await fileHandle.getFile();
         const fileSize = file.size;
         if (fileSize > 10240) {
-          updateProgress.downloaded();
+          updateProgress.end();
           return true;
         }
         throw new Error("File size exceeds 5MB");
       } catch (error) {
-        const file = await (await dir.getFileHandle(title, { create: true })).createWritable();
-        const m3u8UrlData = await getDownloadUrlListAndKey(url);
-        updateProgress.updateLen(m3u8UrlData.urls.length);
-        const { stream } = await downloadStream(m3u8UrlData, updateProgress);
-        await stream.pipeTo(file, { preventClose: true });
-        return file.close();
+        return false;
       }
     };
+    const save = async (title, url) => {
+      const file = await (await dir.getFileHandle(title, { create: true })).createWritable();
+      const m3u8UrlData = await getDownloadUrlListAndKey(url);
+      updateProgress.updateLen(m3u8UrlData.urls.length);
+      const { stream } = await downloadStream(m3u8UrlData, updateProgress);
+      await stream.pipeTo(file, { preventClose: true });
+      return file.close();
+    };
     if (!Array.isArray(data)) {
-      updateProgress = progress2(0, false);
       return save(data.title, data.url);
     }
-    updateProgress = progress2(data.length, true);
+    dir = await getSaveDir(dir, name);
     for (const item of data) {
       updateProgress.updateIndex();
-      const is = await save(item.title, item.url);
+      const is = await isExists(item.title);
       if (is)
         updateProgress.skip();
+      else {
+        const url = await getM3u8HighUrl(item.id);
+        await save(item.title, url);
+      }
     }
     updateProgress.downloaded();
   };
@@ -2351,33 +2400,35 @@ video::-webkit-media-text-track-display {
     });
     return { stream };
   };
-  const videoPageDOM = (data, token, retry = 0) => {
+  const getSaveDir = async (dir, name) => {
+    const saveDir = await dir.getDirectoryHandle(name, { create: true });
+    return saveDir;
+  };
+  const videoPageDOM = async (data, retry = 0) => {
+    var _a;
     if (document.querySelector("#downloadDOM"))
       return;
-    return new Promise(async (res) => {
-      var _a;
-      let parentElement = (_a = document.querySelector("#video-page-wrapper")) == null ? void 0 : _a.children[1];
-      if (parentElement) {
-        if (parentElement.querySelector(":scope>button"))
-          parentElement = parentElement.children[2];
-        const time = data.data.video_page.released_at.split(" ")[0];
-        const title = `[${time}] ${document.title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
-        const m3u8 = await getM3u8Data(token);
-        addPageDOM(title, parentElement, m3u8);
-        return;
-      }
-      if (retry++ > 5)
-        return;
-      setTimeout(() => {
-        res(videoPageDOM(data, token, retry));
-      }, 300);
-    });
+    let parentElement = (_a = document.querySelector("#video-page-wrapper")) == null ? void 0 : _a.children[1];
+    if (parentElement) {
+      if (parentElement.querySelector(":scope>button"))
+        parentElement = parentElement.children[2];
+      const title = processName(data.data.video_page.released_at, document.title);
+      const videoId = document.URL.split("video/")[1];
+      const m3u8 = await getM3u8Data(videoId);
+      addPageDOM$1(title, parentElement, m3u8);
+      return;
+    }
+    if (retry++ > 5)
+      return;
+    setTimeout(() => {
+      videoPageDOM(data, retry);
+    }, 300);
   };
-  const addPageDOM = (title, parentElement, m3u8Data) => {
+  const addPageDOM$1 = (title, parentElement, m3u8Data) => {
     const firstElement = parentElement.children[0];
     const dom = createDivBox();
     dom.id = "downloadDOM";
-    let isDown = false;
+    let isDown2 = false;
     const m3u8 = {
       currentIndex: 0,
       urls: getResolutionUrls(m3u8Data)
@@ -2388,18 +2439,18 @@ video::-webkit-media-text-track-display {
       initVideo(m3u8Data, DOM);
     }));
     dom.appendChild(createDOM("下载1 (Chrome | edge | Opera)", async () => {
-      if (isDown) {
+      if (isDown2) {
         alert("已在下载中");
         return;
       }
-      isDown = true;
-      const p = progress(parentElement);
+      isDown2 = true;
+      const p = progress(parentElement, 0, false, "0 0 7px 0");
       try {
         await download1({ title, url: m3u8.urls[m3u8.currentIndex].url }, p.fn);
       } catch (error) {
+        console.warn(error);
         p.remove(2e3);
       }
-      isDown = false;
     }));
     parentElement.insertBefore(dom, firstElement);
   };
@@ -2418,10 +2469,135 @@ video::-webkit-media-text-track-display {
     };
     return select;
   };
+  const listPageDOM = (data, retry = 0) => {
+    var _a;
+    const type = document.URL.split("/").at(-1).replace(/\?.*/, "");
+    if (!data.data.video_pages.total || !["videos", "lives"].some((p) => p === type))
+      return;
+    const parentElement = document.querySelector(".MuiBox-root").children[1].children[0].children[0];
+    const list = (_a = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _a.children[0];
+    if (parentElement && list) {
+      updateListData(data.data.video_pages);
+      let countDOM = document.querySelector("#downloadCount");
+      if (!countDOM) {
+        addPageDOM(parentElement, type);
+        countDOM = document.querySelector("#downloadCount").children[0];
+        addListInputDOM(list, countDOM, type);
+      }
+      return;
+    }
+    if (retry++ > 5)
+      return;
+    setTimeout(() => {
+      listPageDOM(data, retry);
+    }, 300);
+  };
+  const addPageDOM = (parentElement, type) => {
+    const margin = type === "lives" ? "0 0 0.4rem 0" : "0 0 0.4rem 0.75rem";
+    const index = type === "lives" ? 2 : 1;
+    const firstElement = parentElement.children[index];
+    const tip = createDivBox(margin);
+    const dom = createDivBox(type === "lives" ? "0" : "0 0 0 0.75rem");
+    tip.appendChild(createDOM("默认下载最高画质,会跳过已下载的文件"));
+    tip.appendChild(createDOM("点击查看支持浏览器", () => {
+      window.open("https://caniuse.com/?search=showDirectoryPicker", "_blank");
+    }));
+    dom.appendChild(createDOM("下载", async () => {
+      downloadHandler(parentElement, false, margin, index);
+    }));
+    dom.appendChild(createDOM("全部下载", async () => {
+      if (Object.keys(listData.list).length !== listData.total) {
+        const list = await getList(type, Math.ceil(listData.total / 100));
+        updateListData({ list, total: listData.total });
+      }
+      downloadHandler(parentElement, true, margin, index);
+    }));
+    const countDOM = createDOM(`0 / ${listData.total}`);
+    countDOM.id = "downloadCount";
+    dom.appendChild(countDOM);
+    parentElement.insertBefore(tip, firstElement);
+    parentElement.insertBefore(dom, firstElement);
+  };
+  const addListInputDOM = (parentElement, countDOM, type) => {
+    let i = 0;
+    const addInputFun = (dom) => {
+      dom.style.position = "relative";
+      const domClass = type === "lives" ? ".MuiTypography-subtitle2" : ".MuiTypography-colorTextPrimary";
+      const textDOM = dom.querySelector(domClass);
+      const title = textDOM.innerText;
+      const input = createInput("checkbox");
+      if (type === "lives")
+        input.style.margin = "0px 12px";
+      input.onchange = () => {
+        i += input.checked ? 1 : -1;
+        listData.list[title].isDown = input.checked;
+        countDOM.innerHTML = `${i} / ${listData.total}`;
+      };
+      dom.appendChild(input);
+    };
+    if (!parentElement.children[1])
+      parentElement = parentElement.parentElement;
+    listenerDOMAdd(parentElement, addInputFun);
+    const listDOM = Array.from(parentElement.children);
+    listDOM.forEach((p) => addInputFun(p));
+  };
+  const listData = {
+    list: {},
+    total: 0
+  };
+  const updateListData = (data) => {
+    data.list.reduce((result, value) => {
+      const title = processName(value.released_at, value.title);
+      result[value.title] = { title, id: value.content_code, isDown: false };
+      return result;
+    }, listData.list);
+    listData.total = data.total;
+  };
+  let unObserverList = () => {
+  };
+  let isDown = false;
+  const downloadHandler = async (dom, isAll, margin, index) => {
+    if (isDown)
+      return;
+    let list = Object.values(listData.list);
+    if (!isAll)
+      list = list.filter((p2) => p2.isDown);
+    if (!list.length) {
+      alert("尚未选择视频");
+      return;
+    }
+    isDown = true;
+    const p = progress(dom, list.length, true, margin, index);
+    try {
+      await download1(list, p.fn, document.title);
+    } catch (error) {
+      console.warn(error);
+      p.remove();
+    }
+    isDown = false;
+  };
+  const listenerDOMAdd = (dom, fun) => {
+    unObserverList();
+    const observer = new MutationObserver(function(mutationRecoards, observer2) {
+      for (const item of mutationRecoards) {
+        if (item.type === "childList") {
+          const DOM = item.addedNodes[0];
+          fun(DOM);
+        }
+      }
+    });
+    unObserverList = () => {
+      observer.disconnect();
+    };
+    observer.observe(dom, { childList: true });
+    return observer;
+  };
   style();
   script();
-  listenReq([
-    { value: "public_status", callback: videoPageDOM }
+  listenReq(["public_status", "video_pages?vod_type", "live_pages?page", "views_comments"], [
+    { value: "public_status", callback: videoPageDOM },
+    { value: "video_pages?vod_type", callback: listPageDOM },
+    { value: "live_pages?page", callback: listPageDOM }
   ]);
 
 })();

@@ -7,6 +7,8 @@ declare global {
   }
   interface Window {
     apiPrefix: string;
+    Authorization: string;
+    fcId: string;
   }
 }
 

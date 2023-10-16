@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.0",
-        description: "播放跟下载功能,有下载进度,后续会添加列表页面批量下载的功能",
+        version: "1.1",
+        description: "播放跟下载功能,有下载进度,支持列表页面批量下载",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",

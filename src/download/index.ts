@@ -1,51 +1,61 @@
 import type { M3u8UrlData, Progress } from "../types";
-import { getDownloadUrlListAndKey } from "../get";
+import { getDownloadUrlListAndKey, getM3u8HighUrl } from "../get";
 import { decrypt } from "./crypto";
 
 enum RETRIES {
   MAX = 5
 }
-
 type DownlaodUrl = { title: string; url: string; };
+type DownlaodUrl2 = { title: string; id: string; };
+interface DOWNParam {
+  (data: DownlaodUrl2[], progress: () => Progress, name: string): Promise<true | void>;
+  (data: DownlaodUrl, progress: () => Progress, name?: string): Promise<true | void>;
+}
 
-export const download1 = async (data: DownlaodUrl | DownlaodUrl[], progress: (len: number, isMultiple: boolean) => Progress) => {
-  const dir = await showDirectoryPicker({ mode: "readwrite" });
-  let updateProgress = {} as Progress;
+export const download1: DOWNParam = async (data, progress, name) => {
+  let dir = await showDirectoryPicker({ mode: "readwrite" });
+  let updateProgress = progress();;
 
-  const save = async (title: string, url: string) => {
+  const isExists = async (title: string) => {
     try {
       const fileHandle = await dir.getFileHandle(title);
       const file = await fileHandle.getFile();
       const fileSize = file.size;
 
       if (fileSize > 10240) {
-        updateProgress.downloaded();
+        updateProgress.end();
         return true;
       }
       throw new Error('File size exceeds 5MB');
-
     } catch (error) {
-      const file = await (await dir.getFileHandle(title, { create: true })).createWritable();
-      const m3u8UrlData = await getDownloadUrlListAndKey(url);
-
-      updateProgress.updateLen(m3u8UrlData.urls.length);
-      const { stream } = await downloadStream(m3u8UrlData, updateProgress);
-
-      await stream.pipeTo(file, { preventClose: true });
-      return file.close();
+      return false;
     }
   };
 
+  const save = async (title: string, url: string) => {
+    const file = await (await dir.getFileHandle(title, { create: true })).createWritable();
+    const m3u8UrlData = await getDownloadUrlListAndKey(url);
+
+    updateProgress.updateLen(m3u8UrlData.urls.length);
+    const { stream } = await downloadStream(m3u8UrlData, updateProgress);
+
+    await stream.pipeTo(file, { preventClose: true });
+    return file.close();
+  };
+
   if (!Array.isArray(data)) {
-    updateProgress = progress(0, false);
     return save(data.title, data.url);
   }
 
-  updateProgress = progress(data.length, true);
+  dir = await getSaveDir(dir, name!);
   for (const item of data) {
     updateProgress.updateIndex();
-    const is = await save(item.title, item.url);
+    const is = await isExists(item.title);
     if (is) updateProgress.skip();
+    else {
+      const url = await getM3u8HighUrl(item.id);
+      await save(item.title, url);
+    }
   }
   updateProgress.downloaded();
 };
@@ -86,4 +96,9 @@ const downloadStream = async (m3u8UrlData: M3u8UrlData, updateProgress: Progress
   });
 
   return { stream };
+};
+
+const getSaveDir = async (dir: FileSystemDirectoryHandle, name: string) => {
+  const saveDir = await dir.getDirectoryHandle(name, { create: true });
+  return saveDir;
 };
