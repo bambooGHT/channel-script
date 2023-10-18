@@ -13,10 +13,12 @@ export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) =
     if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
 
     const title = processName(data.data.video_page.released_at, document.title);
-    const videoId = document.URL.split("video/")[1];
+    let videoId = document.URL.split("video/")[1];
+    if (!videoId) videoId = document.URL.split("live/")[1];
+
     const m3u8 = await getM3u8Data(videoId);
     addPageDOM(title, parentElement, m3u8);
-
+    
     return;
   }
   if (retry++ > 5) return;

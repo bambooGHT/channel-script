@@ -5,8 +5,10 @@ import { decrypt } from "./crypto";
 enum RETRIES {
   MAX = 5
 }
+
 type DownlaodUrl = { title: string; url: string; };
 type DownlaodUrl2 = { title: string; id: string; };
+
 interface DOWNParam {
   (data: DownlaodUrl2[], progress: () => Progress, name: string): Promise<true | void>;
   (data: DownlaodUrl, progress: () => Progress, name?: string): Promise<true | void>;
@@ -26,7 +28,7 @@ export const download1: DOWNParam = async (data, progress, name) => {
         updateProgress.end();
         return true;
       }
-      throw new Error('File size exceeds 5MB');
+      throw new Error('File size exceeds 1MB');
     } catch (error) {
       return false;
     }

@@ -86,25 +86,53 @@ export const getList = async (type: string, len: number) => {
   return list;
 };
 
-const req = async (url: string, method = "GET") => {
-  const ops: ObjIndex = {
-    method,
-    headers: getHeaders(),
-    credentials: 'include',
-  };
-  if (method === "POST") {
-    ops.body = JSON.stringify({});
-  }
-  return (await fetch(url, ops)).json();
+const req = (url: string, method = "GET", r = 0): Promise<any> => {
+  return new Promise(async (res) => {
+    const ops: ObjIndex = {
+      method,
+      headers: getHeaders(),
+      credentials: 'include',
+    };
+    if (method === "POST") {
+      ops.body = JSON.stringify({});
+    }
+    fetch(url, ops)
+      .then(async (data) => {
+        if (!data.ok) {
+          throw new Error("HTTP error: " + data.status);
+        }
+        res(data.json());
+      })
+      .catch(async (error) => {
+        if (++r > 5) {
+          console.error(error);
+          throw new Error("下载失败");
+        }
+        await updateToken();
+        res(req(url, method, r));
+      });
+  });
+
 };
 
 const getHeaders = () => {
   const headersData = {
     'Accept': 'application/json, text/plain, */*',
     'Content-Type': 'application/json',
-    'Fc_site_id': window.fcId,
+    'Fc_site_id': window.fcId || 1,
     'Fc_use_device': 'null',
     Authorization: window.Authorization
   };
   return headersData;
+};
+
+const updateToken = async () => {
+  const ops: ObjIndex = {
+    method: "POST",
+    body: JSON.stringify({}),
+    headers: getHeaders(),
+    credentials: 'include',
+  };
+  const { data } = await (await fetch("https://nfc-api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh", ops)).json();
+  window.Authorization = "Bearer " + data.access_token;
 };

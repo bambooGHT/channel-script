@@ -2038,18 +2038,15 @@ video::-webkit-media-text-track-display {
 }`;
     document.head.appendChild(style1);
   };
-  const listenReq = (includesValue, conditions) => {
+  const listenReq = (conditions) => {
     const originalOpen = XMLHttpRequest.prototype.open;
     const originalSend = XMLHttpRequest.prototype.send;
-    const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
-    XMLHttpRequest.prototype.setRequestHeader = function(hander, value) {
-      if (includesValue.some((p) => this._url.includes(p))) {
-        if (hander === "Authorization")
-          window.Authorization = value;
-        if (hander === "Fc_site_id" || hander === "fc_site_id")
-          window.fcId = value;
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(key, value) {
+      if (key === "persist:auth") {
+        window.Authorization = "Bearer " + JSON.parse(JSON.parse(value).totalUserInformation)["soyogisetune-asmr-plus"].userInformation.accessToken;
       }
-      setRequestHeader.apply(this, arguments);
+      originalSetItem.call(this, key, value);
     };
     XMLHttpRequest.prototype.open = function(method, url) {
       this._url = url;
@@ -2060,10 +2057,8 @@ video::-webkit-media-text-track-display {
       for (const item of conditions) {
         if (_url.includes(item.value)) {
           this.addEventListener("load", function() {
-            if (!window.Authorization) {
-              alert("需要登录才能使用");
+            if (!window.Authorization)
               return;
-            }
             window.apiPrefix = _url.split("fc/")[0];
             const data = JSON.parse(this.response);
             item.callback(data);
@@ -2151,26 +2146,50 @@ video::-webkit-media-text-track-display {
     }
     return list;
   };
-  const req = async (url, method = "GET") => {
-    const ops = {
-      method,
-      headers: getHeaders(),
-      credentials: "include"
-    };
-    if (method === "POST") {
-      ops.body = JSON.stringify({});
-    }
-    return (await fetch(url, ops)).json();
+  const req = (url, method = "GET", r = 0) => {
+    return new Promise(async (res) => {
+      const ops = {
+        method,
+        headers: getHeaders(),
+        credentials: "include"
+      };
+      if (method === "POST") {
+        ops.body = JSON.stringify({});
+      }
+      fetch(url, ops).then(async (data) => {
+        if (!data.ok) {
+          throw new Error("HTTP error: " + data.status);
+        }
+        res(data.json());
+      }).catch(async (error) => {
+        if (++r > 5) {
+          console.error(error);
+          throw new Error("下载失败");
+        }
+        await updateToken();
+        res(req(url, method, r));
+      });
+    });
   };
   const getHeaders = () => {
     const headersData = {
       "Accept": "application/json, text/plain, */*",
       "Content-Type": "application/json",
-      "Fc_site_id": window.fcId,
+      "Fc_site_id": window.fcId || 1,
       "Fc_use_device": "null",
       Authorization: window.Authorization
     };
     return headersData;
+  };
+  const updateToken = async () => {
+    const ops = {
+      method: "POST",
+      body: JSON.stringify({}),
+      headers: getHeaders(),
+      credentials: "include"
+    };
+    const { data } = await (await fetch("https://nfc-api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh", ops)).json();
+    window.Authorization = "Bearer " + data.access_token;
   };
   const createDOM = (name, fun) => {
     const DOM = `<div class="m1 m3 s1 s2">
@@ -2338,7 +2357,7 @@ video::-webkit-media-text-track-display {
           updateProgress.end();
           return true;
         }
-        throw new Error("File size exceeds 5MB");
+        throw new Error("File size exceeds 1MB");
       } catch (error) {
         return false;
       }
@@ -2413,7 +2432,9 @@ video::-webkit-media-text-track-display {
       if (parentElement.querySelector(":scope>button"))
         parentElement = parentElement.children[2];
       const title = processName(data.data.video_page.released_at, document.title);
-      const videoId = document.URL.split("video/")[1];
+      let videoId = document.URL.split("video/")[1];
+      if (!videoId)
+        videoId = document.URL.split("live/")[1];
       const m3u8 = await getM3u8Data(videoId);
       addPageDOM$1(title, parentElement, m3u8);
       return;
@@ -2594,10 +2615,16 @@ video::-webkit-media-text-track-display {
   };
   style();
   script();
-  listenReq(["public_status", "video_pages?vod_type", "live_pages?page", "views_comments"], [
+  listenReq([
     { value: "public_status", callback: videoPageDOM },
     { value: "video_pages?vod_type", callback: listPageDOM },
-    { value: "live_pages?page", callback: listPageDOM }
+    { value: "live_pages?page", callback: listPageDOM },
+    {
+      value: "content_providers",
+      callback: (data) => {
+        window.fcId = data.data.content_providers.id;
+      }
+    }
   ]);
 
 })();

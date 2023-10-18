@@ -5,17 +5,16 @@ type Condition = {
   callback: ListenReqFun;
 };
 
-export const listenReq = (includesValue: string[], conditions: Condition[]) => {
+export const listenReq = (conditions: Condition[]) => {
   const originalOpen = XMLHttpRequest.prototype.open;
   const originalSend = XMLHttpRequest.prototype.send;
-  const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
-
-  XMLHttpRequest.prototype.setRequestHeader = function (hander, value) {
-    if (includesValue.some(p => this._url.includes(p))) {
-      if (hander === "Authorization") window.Authorization = value;
-      if (hander === "Fc_site_id" || hander === "fc_site_id") window.fcId = value;
+  const originalSetItem = Storage.prototype.setItem;
+  
+  Storage.prototype.setItem = function (key, value) {
+    if (key === "persist:auth") {
+      window.Authorization = "Bearer " + JSON.parse(JSON.parse(value).totalUserInformation)["soyogisetune-asmr-plus"].userInformation.accessToken;
     }
-    setRequestHeader.apply(this, arguments as any);
+    originalSetItem.call(this, key, value);
   };
 
   XMLHttpRequest.prototype.open = function (method, url: string) {
@@ -29,10 +28,7 @@ export const listenReq = (includesValue: string[], conditions: Condition[]) => {
     for (const item of conditions) {
       if (_url.includes(item.value)) {
         this.addEventListener('load', function () {
-          if (!window.Authorization) {
-            alert("需要登录才能使用");
-            return;
-          }
+          if (!window.Authorization) return;
 
           window.apiPrefix = _url.split("fc/")[0];
           const data = JSON.parse(this.response);
