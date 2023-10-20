@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.1
+// @version      1.2
 // @author       bambooGHT
-// @description  播放跟下载功能,有下载进度,支持列表页面批量下载
+// @description  修复live无法播放,视频列表页面下载请求失败的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -12,7 +12,7 @@
 // @match        https://kemomimirefle.net/*
 // @match        https://nicochannel.jp/*
 // @match        https://yamingfc.net/*
-// @grant        none
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 (function () {
@@ -2038,48 +2038,6 @@ video::-webkit-media-text-track-display {
 }`;
     document.head.appendChild(style1);
   };
-  const listenReq = (conditions) => {
-    const originalOpen = XMLHttpRequest.prototype.open;
-    const originalSend = XMLHttpRequest.prototype.send;
-    const originalSetItem = Storage.prototype.setItem;
-    Storage.prototype.setItem = function(key, value) {
-      if (key === "persist:auth") {
-        window.Authorization = "Bearer " + JSON.parse(JSON.parse(value).totalUserInformation)["soyogisetune-asmr-plus"].userInformation.accessToken;
-      }
-      originalSetItem.call(this, key, value);
-    };
-    XMLHttpRequest.prototype.open = function(method, url) {
-      this._url = url;
-      originalOpen.apply(this, arguments);
-    };
-    XMLHttpRequest.prototype.send = function() {
-      const { _url } = this;
-      for (const item of conditions) {
-        if (_url.includes(item.value)) {
-          this.addEventListener("load", function() {
-            if (!window.Authorization)
-              return;
-            window.apiPrefix = _url.split("fc/")[0];
-            const data = JSON.parse(this.response);
-            item.callback(data);
-          });
-        }
-      }
-      originalSend.apply(this, arguments);
-    };
-  };
-  const script = () => {
-    const scripts = [
-      "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/video.js/8.5.2/video.min.js"
-    ];
-    scripts.forEach((p) => {
-      const script2 = document.createElement("script");
-      script2.setAttribute("type", "text/javascript");
-      script2.src = p;
-      document.documentElement.appendChild(script2);
-    });
-  };
   const getDownloadUrlListAndKey = async (url) => {
     const data = await (await fetch(url)).text();
     const key = await getKey(data);
@@ -2162,9 +2120,9 @@ video::-webkit-media-text-track-display {
         }
         res(data.json());
       }).catch(async (error) => {
-        if (++r > 5) {
+        if (++r > 1) {
           console.error(error);
-          throw new Error("下载失败");
+          throw new Error("请求失败");
         }
         await updateToken();
         res(req(url, method, r));
@@ -2177,19 +2135,71 @@ video::-webkit-media-text-track-display {
       "Content-Type": "application/json",
       "Fc_site_id": window.fcId || 1,
       "Fc_use_device": "null",
-      Authorization: window.Authorization
+      Authorization: window.Authorization || "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICItUnRFd09TbFVCalFza0IzQWROdmdyZmRhZHllbm1reVF1SW96dG5hdno4In0.eyJleHAiOjE2OTc4MDkwNjQsImlhdCI6MTY5NzgwODc2NCwiYXV0aF90aW1lIjoxNjk3NDc2Mzc0LCJqdGkiOiI2NzcyNDA0Yy1jODY5LTQzZGYtOWFlMC01NjliYzNmZDM5ODgiLCJpc3MiOiJodHRwczovL2F1dGguc2hlZXRhLmNvbS9hdXRoL3JlYWxtcy9GQ1MwMDAwMSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIzODI0M2E1MC1kMjFlLTQzMzEtODBmZi04YTJkOGU3ZWJhMzkiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJGQ1MwMDI3NCIsInNlc3Npb25fc3RhdGUiOiJiOWFkN2Q4NS03NTk0LTRhYjAtYjYwNC1jYWFmYzdkODRhMTAiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1mY3MwMDAwMSIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsInNpZCI6ImI5YWQ3ZDg1LTc1OTQtNGFiMC1iNjA0LWNhYWZjN2Q4NGExMCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuaWNrbmFtZSI6IuOCsuOCueODiCIsInByZWZlcnJlZF91c2VybmFtZSI6Im5pY29uaWNvXzEyNTY0MjIwMSIsImVtYWlsIjoiMTgzOTc4MTU0NkBxcS5jb20ifQ.nhuIKwTYXgBa3pViSOmvQTJY3YOTBnebYuvX9RjyF8LQLSSS-s2lzU_yTfAfHr4rEcQXV3qHTNC6PLtHcoYK7QCz0SVZsFES6xDojjk04wC3_W06vIK7Gd259JcdeyKj_chRE0ZG_v4uakKV5I1PheH4IV2LsUqRnN8b7MVh08R_G6qL5ceGcd9GBG_-rTDS3pM0UFUClFcMiq6j1d8IVm95zfq9zx789No3vW-ob6l-KOuRsEsWq2MyiSm7DrFB9-K5Q0cxBcvCQXwDxoyYQSNhx5MbDWpa1rCuUt0P92Q6WicuBfXRmfamgmH8dGpt7PAy6ERAuyu1iBriZIRtwA"
     };
     return headersData;
   };
   const updateToken = async () => {
-    const ops = {
-      method: "POST",
-      body: JSON.stringify({}),
-      headers: getHeaders(),
-      credentials: "include"
+    return new Promise((res) => {
+      const ops = {
+        method: "POST",
+        url: "https://nfc-api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh",
+        data: JSON.stringify({}),
+        headers: { "Cookie": document.cookie, ...getHeaders() },
+        credentials: "include",
+        onload: function(response) {
+          window.Authorization = "Bearer " + JSON.parse(response.responseText).data.access_token;
+          res("ok");
+        }
+      };
+      GM_xmlhttpRequest(ops);
+    });
+  };
+  const listenReq = (includesValue, conditions) => {
+    const originalOpen = XMLHttpRequest.prototype.open;
+    const originalSend = XMLHttpRequest.prototype.send;
+    const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function(hander, value) {
+      if (includesValue.some((p) => this._url.includes(p))) {
+        if (hander === "Authorization")
+          window.Authorization = value;
+        if (hander === "Fc_site_id")
+          window.fcId = value;
+      }
+      setRequestHeader.apply(this, arguments);
     };
-    const { data } = await (await fetch("https://nfc-api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh", ops)).json();
-    window.Authorization = "Bearer " + data.access_token;
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this._url = url;
+      originalOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function() {
+      const { _url } = this;
+      for (const item of conditions) {
+        if (_url.includes(item.value)) {
+          this.addEventListener("load", async function() {
+            if (!window.Authorization) {
+              await updateToken();
+            }
+            window.apiPrefix = _url.split("fc/")[0];
+            const data = JSON.parse(this.response);
+            item.callback(data);
+          });
+        }
+      }
+      originalSend.apply(this, arguments);
+    };
+  };
+  const script = () => {
+    const scripts = [
+      "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/video.js/8.5.2/video.min.js"
+    ];
+    scripts.forEach((p) => {
+      const script2 = document.createElement("script");
+      script2.setAttribute("type", "text/javascript");
+      script2.src = p;
+      document.documentElement.appendChild(script2);
+    });
   };
   const createDOM = (name, fun) => {
     const DOM = `<div class="m1 m3 s1 s2">
@@ -2615,7 +2625,7 @@ video::-webkit-media-text-track-display {
   };
   style();
   script();
-  listenReq([
+  listenReq(["public_status", "video_pages?vod_type", "live_pages?page"], [
     { value: "public_status", callback: videoPageDOM },
     { value: "video_pages?vod_type", callback: listPageDOM },
     { value: "live_pages?page", callback: listPageDOM },

@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.2",
-        description: "修复live无法播放,视频列表页面下载请求失败的问题",
+        version: "1.3",
+        description: "修复个人域名请求没有token导致没有dom的问题",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",
@@ -20,7 +20,7 @@ export default defineConfig({
           "https://yamingfc.net/*"
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
-        grant: "none",
+        grant: ["GM_xmlhttpRequest"],
         updateURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js",
         downloadURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js"
       },
