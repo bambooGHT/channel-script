@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3
+// @version      1.3.1
 // @author       bambooGHT
-// @description  修复个人域名请求没有token导致没有dom的问题
+// @description  修复个人域名请求没有token导致没有dom的问题,新增地址https://rizuna-official.com
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -12,6 +12,7 @@
 // @match        https://kemomimirefle.net/*
 // @match        https://nicochannel.jp/*
 // @match        https://yamingfc.net/*
+// @match        https://rizuna-official.com/*
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
