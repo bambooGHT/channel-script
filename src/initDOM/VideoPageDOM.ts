@@ -59,7 +59,7 @@ const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: stri
       console.warn(error);
       p.remove(2000);
     }
-
+    isDown = false;
   }));
 
   parentElement.insertBefore(dom, firstElement);

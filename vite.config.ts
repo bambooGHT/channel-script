@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.1",
+        version: "1.3.2",
         description: "修复个人域名请求没有token导致没有dom的问题,新增地址https://rizuna-official.com",
         author: "bambooGHT",
         match: [
