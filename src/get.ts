@@ -32,11 +32,6 @@ export const getResolutionUrls = (m3u8Data: string) => {
   }, []);
 };
 
-export const formatTitle = (title: string) => {
-  const value = (<HTMLDivElement>document.querySelectorAll(".MuiTypography-caption")[1]).innerText;
-  return `[${value}] ${document.title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
-};
-
 export const clacSize = (size: number) => {
   const aMultiples = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   const bye = 1024;
@@ -71,7 +66,7 @@ export const getM3u8HighUrl = async (id: string) => {
 
 
 export const processName = (time: string, title: string) => {
-  return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
+  return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[/\\:?"<>|\*]/g, "");
 };
 
 export const getList = async (type: string, len: number) => {

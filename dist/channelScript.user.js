@@ -2093,7 +2093,7 @@ video::-webkit-media-text-track-display {
     return urls[0].url;
   };
   const processName = (time, title) => {
-    return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[<>/\\? \*]/g, "");
+    return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[/\\:?"<>|\*]/g, "");
   };
   const getList = async (type, len) => {
     const list = [];
