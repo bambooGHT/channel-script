@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.2",
-        description: "修复个人域名请求没有token导致没有dom的问题,新增地址https://rizuna-official.com",
+        version: "1.3.3",
+        description: "修复了选不同分辨率播放失效的问题,添加了没有登录时的提示",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",

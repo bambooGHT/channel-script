@@ -130,7 +130,15 @@ export const updateToken = async () => {
       headers: { "Cookie": document.cookie, ...getHeaders() },
       credentials: 'include',
       onload: function (response: any) {
-        window.Authorization = "Bearer " + JSON.parse(response.responseText).data.access_token;
+        const resData = JSON.parse(response.responseText);
+
+        if (resData.error?.message === "record not found") {
+          window.isError = true;
+          alert("使用脚本需要登录");
+          throw Error("使用脚本需要登录");
+        }
+        
+        window.Authorization = "Bearer " + resData.data.access_token;
         res("ok");
       }
     };

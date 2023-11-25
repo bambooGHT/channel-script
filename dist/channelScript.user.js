@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.2
+// @version      1.3.3
 // @author       bambooGHT
-// @description  修复个人域名请求没有token导致没有dom的问题,新增地址https://rizuna-official.com
+// @description  修复了选不同分辨率播放失效的问题,添加了没有登录时的提示
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -2149,7 +2149,14 @@ video::-webkit-media-text-track-display {
         headers: { "Cookie": document.cookie, ...getHeaders() },
         credentials: "include",
         onload: function(response) {
-          window.Authorization = "Bearer " + JSON.parse(response.responseText).data.access_token;
+          var _a;
+          const resData = JSON.parse(response.responseText);
+          if (((_a = resData.error) == null ? void 0 : _a.message) === "record not found") {
+            window.isError = true;
+            alert("使用脚本需要登录");
+            throw Error("使用脚本需要登录");
+          }
+          window.Authorization = "Bearer " + resData.data.access_token;
           res("ok");
         }
       };
@@ -2178,6 +2185,8 @@ video::-webkit-media-text-track-display {
       for (const item of conditions) {
         if (_url.includes(item.value)) {
           this.addEventListener("load", async function() {
+            if (window.isError)
+              return;
             if (!window.Authorization) {
               await updateToken();
             }
@@ -2292,11 +2301,7 @@ video::-webkit-media-text-track-display {
     return input;
   };
   const initVideo = (m3u8Data, element) => {
-    if (element.querySelector("#myVideo"))
-      return;
     const video = createVideo(element);
-    const blob = new Blob([m3u8Data], { type: "application/x-mpegURL" });
-    const url = URL.createObjectURL(blob);
     const player = videojs(video, {
       controlBar: {
         pictureInPictureToggle: true
@@ -2309,15 +2314,14 @@ video::-webkit-media-text-track-display {
       preload: "auto",
       playbackRates: [0.5, 1, 1.5, 2, 2.5, 3],
       sources: [{
-        src: url,
+        src: m3u8Data,
         type: "application/x-mpegURL"
       }],
       experimentalSvgIcons: true,
       disablepictureinpicture: false,
-      bigPlayButton: true,
       pip: true,
       enableDocumentPictureInPicture: false
-    }, () => URL.revokeObjectURL(url));
+    });
     return player;
   };
   const createVideo = (element) => {
@@ -2422,7 +2426,7 @@ video::-webkit-media-text-track-display {
           return;
         }
         const url = urls.splice(0, 6);
-        let datas = await Promise.all(url.map((URL2) => downAndDecryptFun(URL2)));
+        let datas = await Promise.all(url.map((URL) => downAndDecryptFun(URL)));
         datas.forEach((value) => controller.enqueue(value));
         datas = null;
         await this.pull(controller);
@@ -2468,7 +2472,7 @@ video::-webkit-media-text-track-display {
     dom.appendChild(sharpnessSelectDOM(m3u8));
     dom.appendChild(createDOM("play", () => {
       const DOM = document.querySelector("#video-player-wrapper");
-      initVideo(m3u8Data, DOM);
+      initVideo(m3u8.urls[m3u8.currentIndex].url, DOM);
     }));
     dom.appendChild(createDOM("下载1 (Chrome | edge | Opera)", async () => {
       if (isDown2) {

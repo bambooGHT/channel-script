@@ -1,9 +1,7 @@
 export const initVideo = (m3u8Data: string, element: HTMLDivElement) => {
-  if (element.querySelector("#myVideo")) return;
-
   const video = createVideo(element);
-  const blob = new Blob([m3u8Data], { type: "application/x-mpegURL" });
-  const url = URL.createObjectURL(blob);
+  // const blob = new Blob([m3u8Data], { type: "application/x-mpegURL" });
+  // const url = URL.createObjectURL(blob);
   const player = videojs(video, {
     controlBar: {
       pictureInPictureToggle: true,
@@ -16,15 +14,15 @@ export const initVideo = (m3u8Data: string, element: HTMLDivElement) => {
     preload: "auto",
     playbackRates: [0.5, 1, 1.5, 2, 2.5, 3],
     sources: [{
-      src: url,
+      src: m3u8Data,
       type: "application/x-mpegURL"
     }],
     experimentalSvgIcons: true,
     disablepictureinpicture: false,
-    bigPlayButton: true,
     pip: true,
     enableDocumentPictureInPicture: false,
-  }, () => URL.revokeObjectURL(url));
+  });
+  // }, () => URL.revokeObjectURL(url));
 
   return player;
 };

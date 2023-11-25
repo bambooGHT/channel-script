@@ -30,6 +30,7 @@ export const listenReq = (includesValue: string[], conditions: Condition[]) => {
     for (const item of conditions) {
       if (_url.includes(item.value)) {
         this.addEventListener('load', async function () {
+          if (window.isError) return;
           if (!window.Authorization) {
             await updateToken();
           }

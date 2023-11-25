@@ -18,7 +18,7 @@ export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) =
 
     const m3u8 = await getM3u8Data(videoId);
     addPageDOM(title, parentElement, m3u8);
-    
+
     return;
   }
   if (retry++ > 5) return;
@@ -42,7 +42,7 @@ const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: stri
   dom.appendChild(sharpnessSelectDOM(m3u8));
   dom.appendChild(createDOM("play", () => {
     const DOM = document.querySelector("#video-player-wrapper") as HTMLDivElement;
-    initVideo(m3u8Data, DOM);
+    initVideo(m3u8.urls[m3u8.currentIndex].url, DOM);
   }));
   dom.appendChild(createDOM("下载1 (Chrome | edge | Opera)", async () => {
     if (isDown) {
