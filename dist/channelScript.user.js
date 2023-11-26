@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.3
+// @version      1.3.31
 // @author       bambooGHT
 // @description  修复了选不同分辨率播放失效的问题,添加了没有登录时的提示
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
@@ -2187,7 +2187,7 @@ video::-webkit-media-text-track-display {
           this.addEventListener("load", async function() {
             if (window.isError)
               return;
-            if (!window.Authorization) {
+            if (!window.Authorization && document.URL !== "https://nicochannel.jp/") {
               await updateToken();
             }
             window.apiPrefix = _url.split("fc/")[0];

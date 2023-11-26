@@ -31,7 +31,7 @@ export const listenReq = (includesValue: string[], conditions: Condition[]) => {
       if (_url.includes(item.value)) {
         this.addEventListener('load', async function () {
           if (window.isError) return;
-          if (!window.Authorization) {
+          if (!window.Authorization && document.URL !== "https://nicochannel.jp/") {
             await updateToken();
           }
 
