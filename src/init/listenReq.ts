@@ -6,7 +6,7 @@ type Condition = {
   callback: ListenReqFun;
 };
 
-export const listenReq = (includesValue: string[], conditions: Condition[]) => {
+export const listenReq = async (includesValue: string[], conditions: Condition[]) => {
   const originalOpen = XMLHttpRequest.prototype.open;
   const originalSend = XMLHttpRequest.prototype.send;
   const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
@@ -31,10 +31,6 @@ export const listenReq = (includesValue: string[], conditions: Condition[]) => {
       if (_url.includes(item.value)) {
         this.addEventListener('load', async function () {
           if (window.isError) return;
-          if (!window.Authorization && document.URL !== "https://nicochannel.jp/") {
-            await updateToken();
-          }
-
           window.apiPrefix = _url.split("fc/")[0];
           const data = JSON.parse(this.response);
           item.callback(data);
@@ -44,4 +40,7 @@ export const listenReq = (includesValue: string[], conditions: Condition[]) => {
 
     originalSend.apply(this, arguments as any);
   };
+  if (!window.Authorization && document.URL !== "https://nicochannel.jp/") {
+    await updateToken();
+  }
 };
