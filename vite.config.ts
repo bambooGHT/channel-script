@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.33",
+        version: "1.3.34",
         description: "添加新域名",
         author: "bambooGHT",
         match: [

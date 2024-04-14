@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.33
+// @version      1.3.34
 // @author       bambooGHT
 // @description  添加新域名
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
@@ -2154,6 +2154,7 @@ video::-webkit-media-text-track-display {
           const resData = JSON.parse(response.responseText);
           if (((_a = resData.error) == null ? void 0 : _a.message) === "record not found") {
             console.log(resData);
+            await getToken1();
             res("ok");
             return;
           }
@@ -2163,6 +2164,36 @@ video::-webkit-media-text-track-display {
       };
       GM_xmlhttpRequest(ops);
     });
+  };
+  const getToken1 = async () => {
+    var _a, _b;
+    const value = await fetch("https://api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh", {
+      "headers": {
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICItUnRFd09TbFVCalFza0IzQWROdmdyZmRhZHllbm1reVF1SW96dG5hdno4In0.eyJleHAiOjE3MDgyNDQ5ODIsImlhdCI6MTcwODI0NDY4MiwiYXV0aF90aW1lIjoxNzA4MjQzMDcyLCJqdGkiOiJmNjQzZGU4OS01MGFkLTQ2YTUtODUxYS0zZTIxMzdmYjk3NjgiLCJpc3MiOiJodHRwczovL2F1dGguc2hlZXRhLmNvbS9hdXRoL3JlYWxtcy9GQ1MwMDAwMSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIzODI0M2E1MC1kMjFlLTQzMzEtODBmZi04YTJkOGU3ZWJhMzkiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJGQ1MwMDAwMSIsInNlc3Npb25fc3RhdGUiOiJiNTJkYjQ4Ni00OWQyLTRkZDEtYTM2MS1kMWYwOGY3ZGQ1NzUiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1mY3MwMDAwMSIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsInNpZCI6ImI1MmRiNDg2LTQ5ZDItNGRkMS1hMzYxLWQxZjA4ZjdkZDU3NSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuaWNrbmFtZSI6IuOCsuOCueODiCIsInByZWZlcnJlZF91c2VybmFtZSI6Im5pY29uaWNvXzEyNTY0MjIwMSIsImVtYWlsIjoiMTgzOTc4MTU0NkBxcS5jb20ifQ.Je43rLH5R87icBa3VOamHyAaKeTHz7X_QrHjGtmoobNrtIDG9zbWWPRbxSKJRTaled5iWiUe_kXObR-yHRY1iCFdNERundVg_3IBbaQM5kAomxwInGRqHVqUFeI0TpZgtwczBX4YMxggsBb1Wm7SWmNT0_Z_tahZn6ft51Ir1HnvrmLP2Wjs5NxgEcerLB8S0K52UgaC4UA_ksuFiWg5m-_sgBS5ZmEEmI67shKMy_a5fIyjt_qHVtHmW-YA5Wv7cfnUHuR2Z85To7HaYJZhg9nTInGObkEPuZprP7v6mYrKQw2yeA1rA-aKZV6Fk5qv0EMhWK_hsFn2xPyf6pvDGw",
+        "fc_site_id": "16",
+        "fc_use_device": "null",
+        "sec-ch-ua": '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site"
+      },
+      "referrer": "https://nicochannel.jp/",
+      "referrerPolicy": "strict-origin-when-cross-origin",
+      "body": null,
+      "method": "POST",
+      "mode": "cors",
+      "credentials": "include"
+    });
+    const resData = await value.json();
+    if (((_a = resData == null ? void 0 : resData.error) == null ? void 0 : _a.message) === "record not found") {
+      window.isError = true;
+    } else if ((_b = resData == null ? void 0 : resData.data) == null ? void 0 : _b.access_token) {
+      window.Authorization = "Bearer " + resData.data.access_token;
+    }
   };
   const listenReq = async (includesValue, conditions) => {
     const originalOpen = XMLHttpRequest.prototype.open;
