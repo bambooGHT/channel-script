@@ -6,8 +6,6 @@ import { initVideo } from "./Play";
 import { download1 } from "../download";
 
 export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) => {
-  if (document.querySelector("#downloadDOM")) return;
-
   let parentElement: any = document.querySelector("#video-page-wrapper")?.children[1];
   if (parentElement) {
     if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
@@ -29,6 +27,7 @@ export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) =
 };
 
 const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: string) => {
+  if (document.querySelector("#downloadDOM")) return;
   const firstElement = parentElement.children[0];
   const dom = createDivBox();
   dom.id = "downloadDOM";

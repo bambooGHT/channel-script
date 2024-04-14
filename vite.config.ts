@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.32",
-        description: "修复了选不同分辨率播放失效的问题,添加了没有登录时的提示",
+        version: "1.3.33",
+        description: "添加新域名",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",
@@ -18,7 +18,8 @@ export default defineConfig({
           "https://kemomimirefle.net/*",
           "https://nicochannel.jp/*",
           "https://yamingfc.net/*",
-          "https://rizuna-official.com/*"
+          "https://rizuna-official.com/*",
+          "https://uise-official.com/*"
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
         grant: ["GM_xmlhttpRequest"],
