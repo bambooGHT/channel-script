@@ -89,8 +89,7 @@ const downloadStream = async (m3u8UrlData: M3u8UrlData, updateProgress: Progress
         return;
       }
 
-      const url = urls.splice(0, 6);
-      let datas: Uint8Array[] | null = await Promise.all(url.map((URL) => downAndDecryptFun(URL)));
+      let datas: Uint8Array[] | null = await Promise.all(urls.splice(0, 6).map((URL) => downAndDecryptFun(URL)));
       datas.forEach((value) => controller.enqueue(value));
       datas = null;
       await this.pull!(controller);

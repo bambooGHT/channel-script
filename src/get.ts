@@ -121,7 +121,7 @@ export const getlocalToken = () => {
 
 const getUserInfo = () => {
   let fromData = `grant_type=refresh_token&redirect_uri=${document.location.origin}/login/login-redirect`;
-  for (const item of Object.keys(localStorage)) {
+  for (const item of Object.keys(localStorage).filter(p => p.startsWith("@@auth0spajs@@"))) {
     const value = localStorage.getItem(item)!;
     const { body } = JSON.parse(value);
 
@@ -147,43 +147,38 @@ export const updateToken = async () => {
   if (document.URL.includes("nicochannel")) {
     return updateToken1();
   }
+
   const url = "https://auth." + document.location.host + "/oauth/token";
   const data = getUserInfo();
-
-  const headers = {
-    ...getHeaders(),
-    "Cookie": document.cookie,
-    "accept": "*/*",
-    "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
-    "content-type": "application/x-www-form-urlencoded",
-    "priority": "u=1, i",
-    "sec-ch-ua": "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"Windows\"",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site"
-  };
-  return new Promise((res) => {
-    const ops: ObjIndex & { url: string; } = {
-      method: "POST",
-      url,
-      data,
-      headers,
-      onload: async function (response: any) {
-        const resData = JSON.parse(response.responseText);
-        if (resData.error?.message === "record not found") {
-          console.error(resData);
-          res("ok");
-          return;
-        }
-
-        window.Authorization = "Bearer " + resData.access_token;
-        res("ok");
-      }
-    };
-    GM_xmlhttpRequest(ops);
+  const req = await fetch(url, {
+    "headers": {
+      "accept": "*/*",
+      "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
+      "auth0-client": "eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjIuMC42In0=",
+      "content-type": "application/x-www-form-urlencoded",
+      "sec-ch-ua": "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-site"
+    },
+    "referrer": document.location.origin,
+    "referrerPolicy": "strict-origin-when-cross-origin",
+    "method": "POST",
+    body: data,
+    "mode": "cors",
+    "credentials": "omit"
   });
+
+  const resData = await req.json();
+  console.log("req1", resData);
+  if (resData.error?.message === "record not found") {
+    console.error(resData);
+    return;
+  }
+
+  window.Authorization = "Bearer " + resData.access_token;
 };
 
 const updateToken1 = async () => {
@@ -210,6 +205,8 @@ const updateToken1 = async () => {
   });
 
   const resData = await value.json();
+  console.log("req2", resData);
+
   if (resData?.error?.message === "record not found") {
     window.isError = true;
   } else if (resData?.data?.access_token) {

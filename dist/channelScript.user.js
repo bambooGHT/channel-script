@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.4
+// @version      1.3.41
 // @author       bambooGHT
 // @description  修复个人域名无法批量下载的问题 (登录后如果发现脚本不生效,需要刷新页面)
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
@@ -14,7 +14,6 @@
 // @match        https://yamingfc.net/*
 // @match        https://rizuna-official.com/*
 // @match        https://uise-official.com/*
-// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 (function () {
@@ -2143,7 +2142,7 @@ video::-webkit-media-text-track-display {
   };
   const getUserInfo = () => {
     let fromData = `grant_type=refresh_token&redirect_uri=${document.location.origin}/login/login-redirect`;
-    for (const item of Object.keys(localStorage)) {
+    for (const item of Object.keys(localStorage).filter((p) => p.startsWith("@@auth0spajs@@"))) {
       const value = localStorage.getItem(item);
       const { body } = JSON.parse(value);
       if (body) {
@@ -2163,45 +2162,39 @@ video::-webkit-media-text-track-display {
     return headersData;
   };
   const updateToken = async () => {
+    var _a;
     if (document.URL.includes("nicochannel")) {
       return updateToken1();
     }
     const url = "https://auth." + document.location.host + "/oauth/token";
     const data = getUserInfo();
-    const headers = {
-      ...getHeaders(),
-      "Cookie": document.cookie,
-      "accept": "*/*",
-      "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
-      "content-type": "application/x-www-form-urlencoded",
-      "priority": "u=1, i",
-      "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": '"Windows"',
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-site"
-    };
-    return new Promise((res) => {
-      const ops = {
-        method: "POST",
-        url,
-        data,
-        headers,
-        onload: async function(response) {
-          var _a;
-          const resData = JSON.parse(response.responseText);
-          if (((_a = resData.error) == null ? void 0 : _a.message) === "record not found") {
-            console.error(resData);
-            res("ok");
-            return;
-          }
-          window.Authorization = "Bearer " + resData.access_token;
-          res("ok");
-        }
-      };
-      GM_xmlhttpRequest(ops);
+    const req2 = await fetch(url, {
+      "headers": {
+        "accept": "*/*",
+        "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
+        "auth0-client": "eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjIuMC42In0=",
+        "content-type": "application/x-www-form-urlencoded",
+        "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site"
+      },
+      "referrer": document.location.origin,
+      "referrerPolicy": "strict-origin-when-cross-origin",
+      "method": "POST",
+      body: data,
+      "mode": "cors",
+      "credentials": "omit"
     });
+    const resData = await req2.json();
+    console.log("req1", resData);
+    if (((_a = resData.error) == null ? void 0 : _a.message) === "record not found") {
+      console.error(resData);
+      return;
+    }
+    window.Authorization = "Bearer " + resData.access_token;
   };
   const updateToken1 = async () => {
     var _a, _b;
@@ -2227,6 +2220,7 @@ video::-webkit-media-text-track-display {
       "credentials": "include"
     });
     const resData = await value.json();
+    console.log("req2", resData);
     if (((_a = resData == null ? void 0 : resData.error) == null ? void 0 : _a.message) === "record not found") {
       window.isError = true;
     } else if ((_b = resData == null ? void 0 : resData.data) == null ? void 0 : _b.access_token) {
@@ -2493,8 +2487,7 @@ video::-webkit-media-text-track-display {
           updateProgress.end();
           return;
         }
-        const url = urls.splice(0, 6);
-        let datas = await Promise.all(url.map((URL) => downAndDecryptFun(URL)));
+        let datas = await Promise.all(urls.splice(0, 6).map((URL) => downAndDecryptFun(URL)));
         datas.forEach((value) => controller.enqueue(value));
         datas = null;
         await this.pull(controller);
