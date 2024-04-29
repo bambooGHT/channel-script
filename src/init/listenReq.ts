@@ -1,4 +1,4 @@
-import { updateToken } from "../get";
+import { getlocalToken, updateToken } from "../get";
 import type { ListenReqFun } from "../types";
 
 type Condition = {
@@ -11,6 +11,7 @@ export const listenReq = async (includesValue: string[], conditions: Condition[]
   const originalSend = XMLHttpRequest.prototype.send;
   const setRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
+  getlocalToken();
   XMLHttpRequest.prototype.setRequestHeader = function (hander, value) {
     if (includesValue.some(p => this._url.includes(p))) {
       if (hander === "Authorization") window.Authorization = value;
@@ -18,7 +19,6 @@ export const listenReq = async (includesValue: string[], conditions: Condition[]
     }
     setRequestHeader.apply(this, arguments as any);
   };
-
   XMLHttpRequest.prototype.open = function (method, url: string) {
     this._url = url;
     originalOpen.apply(this, arguments as any);
@@ -40,7 +40,4 @@ export const listenReq = async (includesValue: string[], conditions: Condition[]
 
     originalSend.apply(this, arguments as any);
   };
-  if (!window.Authorization && document.URL !== "https://nicochannel.jp/") {
-    await updateToken();
-  }
 };

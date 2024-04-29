@@ -107,39 +107,78 @@ const req = (url: string, method = "GET", r = 0): Promise<any> => {
         res(req(url, method, r));
       });
   });
+};
 
+export const getlocalToken = () => {
+  const data = localStorage.getItem("persist:auth");
+  if (data) {
+    const userData = JSON.parse(JSON.parse(data).totalUserInformation).root;
+    if (userData.userInformation?.accessToken) {
+      window.Authorization = "Bearer " + userData.userInformation.accessToken;
+    }
+  }
+};
+
+const getUserInfo = () => {
+  let fromData = `grant_type=refresh_token&redirect_uri=${document.location.origin}/login/login-redirect`;
+  for (const item of Object.keys(localStorage)) {
+    const value = localStorage.getItem(item)!;
+    const { body } = JSON.parse(value);
+
+    if (body) {
+      fromData += `&client_id=${body.client_id}&refresh_token=${body.refresh_token}`;
+      return fromData;
+    }
+  }
 };
 
 const getHeaders = () => {
   const headersData = {
     'Accept': 'application/json, text/plain, */*',
-    'Content-Type': 'application/json',
-    'Fc_site_id': window.fcId || "1",
+    'Fc_site_id': window.fcId || "16",
     'Fc_use_device': 'null',
-    Authorization: window.Authorization || "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICItUnRFd09TbFVCalFza0IzQWROdmdyZmRhZHllbm1reVF1SW96dG5hdno4In0.eyJleHAiOjE2OTc4MDkwNjQsImlhdCI6MTY5NzgwODc2NCwiYXV0aF90aW1lIjoxNjk3NDc2Mzc0LCJqdGkiOiI2NzcyNDA0Yy1jODY5LTQzZGYtOWFlMC01NjliYzNmZDM5ODgiLCJpc3MiOiJodHRwczovL2F1dGguc2hlZXRhLmNvbS9hdXRoL3JlYWxtcy9GQ1MwMDAwMSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIzODI0M2E1MC1kMjFlLTQzMzEtODBmZi04YTJkOGU3ZWJhMzkiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJGQ1MwMDI3NCIsInNlc3Npb25fc3RhdGUiOiJiOWFkN2Q4NS03NTk0LTRhYjAtYjYwNC1jYWFmYzdkODRhMTAiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1mY3MwMDAwMSIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsInNpZCI6ImI5YWQ3ZDg1LTc1OTQtNGFiMC1iNjA0LWNhYWZjN2Q4NGExMCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuaWNrbmFtZSI6IuOCsuOCueODiCIsInByZWZlcnJlZF91c2VybmFtZSI6Im5pY29uaWNvXzEyNTY0MjIwMSIsImVtYWlsIjoiMTgzOTc4MTU0NkBxcS5jb20ifQ.nhuIKwTYXgBa3pViSOmvQTJY3YOTBnebYuvX9RjyF8LQLSSS-s2lzU_yTfAfHr4rEcQXV3qHTNC6PLtHcoYK7QCz0SVZsFES6xDojjk04wC3_W06vIK7Gd259JcdeyKj_chRE0ZG_v4uakKV5I1PheH4IV2LsUqRnN8b7MVh08R_G6qL5ceGcd9GBG_-rTDS3pM0UFUClFcMiq6j1d8IVm95zfq9zx789No3vW-ob6l-KOuRsEsWq2MyiSm7DrFB9-K5Q0cxBcvCQXwDxoyYQSNhx5MbDWpa1rCuUt0P92Q6WicuBfXRmfamgmH8dGpt7PAy6ERAuyu1iBriZIRtwA"
+    Authorization: window.Authorization,
+    "Content-Type": "application/json;text/plain;charset=UTF-8"
   };
   return headersData;
 };
 
 export const updateToken = async () => {
+  if (document.URL.includes("nicochannel")) {
+    return updateToken1();
+  }
+  const url = "https://auth." + document.location.host + "/oauth/token";
+  const data = getUserInfo();
+
+  const headers = {
+    ...getHeaders(),
+    "Cookie": document.cookie,
+    "accept": "*/*",
+    "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
+    "content-type": "application/x-www-form-urlencoded",
+    "priority": "u=1, i",
+    "sec-ch-ua": "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site"
+  };
   return new Promise((res) => {
     const ops: ObjIndex & { url: string; } = {
       method: "POST",
-      url: "https://nfc-api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh",
-      data: JSON.stringify({}),
-      headers: { "Cookie": document.cookie, ...getHeaders() },
-      credentials: 'include',
+      url,
+      data,
+      headers,
       onload: async function (response: any) {
         const resData = JSON.parse(response.responseText);
-
         if (resData.error?.message === "record not found") {
-          console.log(resData);
-          await getToken1();
+          console.error(resData);
           res("ok");
           return;
         }
 
-        window.Authorization = "Bearer " + resData.data.access_token;
+        window.Authorization = "Bearer " + resData.access_token;
         res("ok");
       }
     };
@@ -147,12 +186,12 @@ export const updateToken = async () => {
   });
 };
 
-const getToken1 = async () => {
+const updateToken1 = async () => {
   const value = await fetch("https://api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh", {
     "headers": {
       "accept": "application/json, text/plain, */*",
       "accept-language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6,zh-CN;q=0.5",
-      "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICItUnRFd09TbFVCalFza0IzQWROdmdyZmRhZHllbm1reVF1SW96dG5hdno4In0.eyJleHAiOjE3MDgyNDQ5ODIsImlhdCI6MTcwODI0NDY4MiwiYXV0aF90aW1lIjoxNzA4MjQzMDcyLCJqdGkiOiJmNjQzZGU4OS01MGFkLTQ2YTUtODUxYS0zZTIxMzdmYjk3NjgiLCJpc3MiOiJodHRwczovL2F1dGguc2hlZXRhLmNvbS9hdXRoL3JlYWxtcy9GQ1MwMDAwMSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIzODI0M2E1MC1kMjFlLTQzMzEtODBmZi04YTJkOGU3ZWJhMzkiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJGQ1MwMDAwMSIsInNlc3Npb25fc3RhdGUiOiJiNTJkYjQ4Ni00OWQyLTRkZDEtYTM2MS1kMWYwOGY3ZGQ1NzUiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1mY3MwMDAwMSIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgZW1haWwgcHJvZmlsZSIsInNpZCI6ImI1MmRiNDg2LTQ5ZDItNGRkMS1hMzYxLWQxZjA4ZjdkZDU3NSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuaWNrbmFtZSI6IuOCsuOCueODiCIsInByZWZlcnJlZF91c2VybmFtZSI6Im5pY29uaWNvXzEyNTY0MjIwMSIsImVtYWlsIjoiMTgzOTc4MTU0NkBxcS5jb20ifQ.Je43rLH5R87icBa3VOamHyAaKeTHz7X_QrHjGtmoobNrtIDG9zbWWPRbxSKJRTaled5iWiUe_kXObR-yHRY1iCFdNERundVg_3IBbaQM5kAomxwInGRqHVqUFeI0TpZgtwczBX4YMxggsBb1Wm7SWmNT0_Z_tahZn6ft51Ir1HnvrmLP2Wjs5NxgEcerLB8S0K52UgaC4UA_ksuFiWg5m-_sgBS5ZmEEmI67shKMy_a5fIyjt_qHVtHmW-YA5Wv7cfnUHuR2Z85To7HaYJZhg9nTInGObkEPuZprP7v6mYrKQw2yeA1rA-aKZV6Fk5qv0EMhWK_hsFn2xPyf6pvDGw",
+      "Authorization": window.Authorization,
       "fc_site_id": "16",
       "fc_use_device": "null",
       "sec-ch-ua": "\"Not A(Brand\";v=\"99\", \"Google Chrome\";v=\"121\", \"Chromium\";v=\"121\"",

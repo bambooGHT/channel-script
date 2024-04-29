@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.34",
-        description: "添加新域名",
+        version: "1.3.4",
+        description: "修复个人域名无法批量下载的问题 (登录后如果发现脚本不生效,需要刷新页面)",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",
