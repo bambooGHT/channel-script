@@ -1,4 +1,4 @@
-import { download1 } from "../download";
+import { downloadVideo } from "../download";
 import { getList, processName } from "../get";
 import { createDivBox, createDOM, createInput, progress } from "./create";
 
@@ -71,9 +71,11 @@ const addListInputDOM = (parentElement: HTMLDivElement, countDOM: HTMLDivElement
     const title = textDOM.innerText;
     const input = createInput("checkbox");
     if (type === "lives") input.style.margin = "0px 12px";
+
     input.onchange = () => {
+      const url = (<HTMLImageElement>dom.querySelector("img")).src.split("&")[0];
       i += input.checked ? 1 : -1;
-      listData.list[title].isDown = input.checked;
+      listData.list[url + title].isDown = input.checked;
       countDOM.innerHTML = `${i} / ${listData.total}`;
     };
     dom.appendChild(input);
@@ -94,7 +96,7 @@ const listData: ListData = {
 const updateListData = (data: Video_pages) => {
   data.list.reduce((result, value) => {
     const title = processName(value.released_at, value.title);
-    result[value.title] = { title, id: value.content_code, isDown: false };
+    result[value.thumbnail_url + value.title] = { title, id: value.content_code, isDown: false };
 
     return result;
   }, listData.list);
@@ -118,7 +120,7 @@ const downloadHandler = async (dom: HTMLDivElement, isAll: boolean, margin: stri
   isDown = true;
   const p = progress(dom, list.length, true, margin, index);
   try {
-    await download1(list, p.fn, document.title);
+    await downloadVideo(list, p.fn, document.title);
   } catch (error) {
     console.warn(error);
     p.remove();

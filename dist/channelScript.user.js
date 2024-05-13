@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.41
+// @version      1.3.42
 // @author       bambooGHT
-// @description  修复个人域名无法批量下载的问题 (登录后如果发现脚本不生效,需要刷新页面)
+// @description  修复批量下载,名稱相同會跳過下載的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -2422,7 +2422,7 @@ video::-webkit-media-text-track-display {
     }
     return uint8Array;
   }
-  const download1 = async (data, progress2, name) => {
+  const downloadVideo = async (data, progress2, name) => {
     let dir = await showDirectoryPicker({ mode: "readwrite" });
     let updateProgress = progress2();
     const isExists = async (title) => {
@@ -2543,7 +2543,7 @@ video::-webkit-media-text-track-display {
       isDown2 = true;
       const p = progress(parentElement, 0, false, "0 0 7px 0");
       try {
-        await download1({ title, url: m3u8.urls[m3u8.currentIndex].url }, p.fn);
+        await downloadVideo({ title, url: m3u8.urls[m3u8.currentIndex].url }, p.fn);
       } catch (error) {
         console.warn(error);
         p.remove(2e3);
@@ -2627,8 +2627,9 @@ video::-webkit-media-text-track-display {
       if (type === "lives")
         input.style.margin = "0px 12px";
       input.onchange = () => {
+        const url = dom.querySelector("img").src.split("&")[0];
         i += input.checked ? 1 : -1;
-        listData.list[title].isDown = input.checked;
+        listData.list[url + title].isDown = input.checked;
         countDOM.innerHTML = `${i} / ${listData.total}`;
       };
       dom.appendChild(input);
@@ -2646,7 +2647,7 @@ video::-webkit-media-text-track-display {
   const updateListData = (data) => {
     data.list.reduce((result, value) => {
       const title = processName(value.released_at, value.title);
-      result[value.title] = { title, id: value.content_code, isDown: false };
+      result[value.thumbnail_url + value.title] = { title, id: value.content_code, isDown: false };
       return result;
     }, listData.list);
     listData.total = data.total;
@@ -2667,7 +2668,7 @@ video::-webkit-media-text-track-display {
     isDown = true;
     const p = progress(dom, list.length, true, margin, index);
     try {
-      await download1(list, p.fn, document.title);
+      await downloadVideo(list, p.fn, document.title);
     } catch (error) {
       console.warn(error);
       p.remove();

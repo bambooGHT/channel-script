@@ -3,7 +3,7 @@ import type { ListenReqFun } from "../types";
 import { createDOM, createDivBox, progress } from "./create";
 import { getResolutionUrls, getM3u8Data, processName } from "../get";
 import { initVideo } from "./Play";
-import { download1 } from "../download";
+import { downloadVideo } from "../download";
 
 export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) => {
   let parentElement: any = document.querySelector("#video-page-wrapper")?.children[1];
@@ -53,7 +53,7 @@ const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: stri
     const p = progress(parentElement, 0, false, "0 0 7px 0");
 
     try {
-      await download1({ title, url: m3u8.urls[m3u8.currentIndex].url }, p.fn);
+      await downloadVideo({ title, url: m3u8.urls[m3u8.currentIndex].url }, p.fn);
     } catch (error) {
       console.warn(error);
       p.remove(2000);

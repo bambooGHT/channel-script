@@ -9,12 +9,12 @@ enum RETRIES {
 type DownlaodUrl = { title: string; url: string; };
 type DownlaodUrl2 = { title: string; id: string; };
 
-interface DOWNParam {
+interface DownloadVideo {
   (data: DownlaodUrl2[], progress: () => Progress, name: string): Promise<true | void>;
   (data: DownlaodUrl, progress: () => Progress, name?: string): Promise<true | void>;
 }
 
-export const download1: DOWNParam = async (data, progress, name) => {
+export const downloadVideo: DownloadVideo = async (data, progress, name) => {
   let dir = await showDirectoryPicker({ mode: "readwrite" });
   let updateProgress = progress();;
 
