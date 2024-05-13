@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.42",
+        version: "1.3.43",
         description: "修复批量下载,名稱相同會跳過下載的问题",
         author: "bambooGHT",
         match: [

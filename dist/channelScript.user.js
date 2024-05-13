@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.42
+// @version      1.3.43
 // @author       bambooGHT
 // @description  修复批量下载,名稱相同會跳過下載的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
@@ -2646,7 +2646,7 @@ video::-webkit-media-text-track-display {
   };
   const updateListData = (data) => {
     data.list.reduce((result, value) => {
-      const title = processName(value.released_at, value.title);
+      const title = processName(value.display_date, value.title);
       result[value.thumbnail_url + value.title] = { title, id: value.content_code, isDown: false };
       return result;
     }, listData.list);

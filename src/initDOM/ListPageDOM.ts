@@ -95,7 +95,7 @@ const listData: ListData = {
 
 const updateListData = (data: Video_pages) => {
   data.list.reduce((result, value) => {
-    const title = processName(value.released_at, value.title);
+    const title = processName(value.display_date, value.title);
     result[value.thumbnail_url + value.title] = { title, id: value.content_code, isDown: false };
 
     return result;
