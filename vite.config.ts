@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "channelScript",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.43",
+        version: "1.3.44",
         description: "修复批量下载,名稱相同會跳過下載的问题",
         author: "bambooGHT",
         match: [
@@ -19,7 +19,8 @@ export default defineConfig({
           "https://nicochannel.jp/*",
           "https://yamingfc.net/*",
           "https://rizuna-official.com/*",
-          "https://uise-official.com/*"
+          "https://uise-official.com/*",
+          "https://tenshi-nano.com/*"
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
         updateURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js",

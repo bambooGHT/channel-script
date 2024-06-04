@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channelScript
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.43
+// @version      1.3.44
 // @author       bambooGHT
 // @description  修复批量下载,名稱相同會跳過下載的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
@@ -14,6 +14,7 @@
 // @match        https://yamingfc.net/*
 // @match        https://rizuna-official.com/*
 // @match        https://uise-official.com/*
+// @match        https://tenshi-nano.com/*
 // ==/UserScript==
 
 (function () {
