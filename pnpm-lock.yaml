@@ -11,9 +11,6 @@ importers:
       '@types/tampermonkey':
         specifier: ^4.20.4
         version: 4.20.4
-      channelScript:
-        specifier: 'link:'
-        version: 'link:'
       crypto-js:
         specifier: ^4.1.1
         version: 4.2.0

@@ -7,7 +7,7 @@ export default defineConfig({
     monkey({
       entry: "./src/index.ts",
       userscript: {
-        name: "channelScript",
+        name: "channel-script",
         namespace: "https://github.com/bambooGHT",
         version: "1.3.44",
         description: "修复批量下载,名稱相同會跳過下載的问题",

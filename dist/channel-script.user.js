@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         channelScript
+// @name         channel-script
 // @namespace    https://github.com/bambooGHT
 // @version      1.3.44
 // @author       bambooGHT
