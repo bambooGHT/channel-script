@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.44",
-        description: "修复批量下载,名稱相同會跳過下載的问题",
+        version: "1.3.5",
+        description: "修复由于api修改导致批量下载不显示的问题",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",

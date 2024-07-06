@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.44
+// @version      1.3.5
 // @author       bambooGHT
-// @description  修复批量下载,名稱相同會跳過下載的问题
+// @description  修复由于api修改导致批量下载不显示的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -2694,10 +2694,10 @@ video::-webkit-media-text-track-display {
   };
   style();
   script();
-  listenReq(["public_status", "video_pages?vod_type", "live_pages?page"], [
+  listenReq(["public_status", "video_pages", "live_pages"], [
     { value: "public_status", callback: videoPageDOM },
-    { value: "video_pages?vod_type", callback: listPageDOM },
-    { value: "live_pages?page", callback: listPageDOM },
+    { value: "video_pages", callback: listPageDOM },
+    { value: "live_pages", callback: listPageDOM },
     {
       value: "content_providers",
       callback: (data) => {
