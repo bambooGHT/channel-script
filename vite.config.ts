@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.5",
-        description: "修复由于api修改导致批量下载不显示的问题",
+        version: "1.3.51",
+        description: "添加url",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",
@@ -20,7 +20,8 @@ export default defineConfig({
           "https://yamingfc.net/*",
           "https://rizuna-official.com/*",
           "https://uise-official.com/*",
-          "https://tenshi-nano.com/*"
+          "https://tenshi-nano.com/*",
+          "https://malice-kibana.com/*"
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
         updateURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js",

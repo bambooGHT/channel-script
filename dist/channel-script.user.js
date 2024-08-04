@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.5
+// @version      1.3.51
 // @author       bambooGHT
-// @description  修复由于api修改导致批量下载不显示的问题
+// @description  添加url
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -15,6 +15,7 @@
 // @match        https://rizuna-official.com/*
 // @match        https://uise-official.com/*
 // @match        https://tenshi-nano.com/*
+// @match        https://malice-kibana.com/*
 // ==/UserScript==
 
 (function () {
