@@ -2570,12 +2570,12 @@ video::-webkit-media-text-track-display {
     return select;
   };
   const listPageDOM = (data, retry = 0) => {
-    var _a;
+    var _a, _b, _c;
     const type = document.URL.split("/").at(-1).replace(/\?.*/, "");
-    if (!data.data.video_pages.total || !["videos", "lives"].some((p) => p === type))
+    if (!((_b = (_a = data.data) == null ? void 0 : _a.video_pages) == null ? void 0 : _b.total) || !["videos", "lives"].some((p) => p === type))
       return;
     const parentElement = document.querySelector(".MuiBox-root").children[1].children[0].children[0];
-    const list = (_a = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _a.children[0];
+    const list = (_c = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _c.children[0];
     if (parentElement && list) {
       updateListData(data.data.video_pages);
       let countDOM = document.querySelector("#downloadCount");

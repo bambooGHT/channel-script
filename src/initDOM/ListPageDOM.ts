@@ -4,7 +4,7 @@ import { createDivBox, createDOM, createInput, progress } from "./create";
 
 export const listPageDOM = (data: Data, retry = 0) => {
   const type = document.URL.split("/").at(-1)!.replace(/\?.*/, "");
-  if (!data.data.video_pages.total || !["videos", "lives"].some(p => p === type)) return;
+  if (!data.data?.video_pages?.total || !["videos", "lives"].some(p => p === type)) return;
   
   const parentElement = document.querySelector(".MuiBox-root")!.children[1].children[0].children[0];
   const list = parentElement.querySelector(".infinite-scroll-component")?.children[0];
