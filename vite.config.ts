@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.51",
-        description: "添加url",
+        version: "1.3.52",
+        description: "改了一下判断逻辑",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",

@@ -5,29 +5,39 @@ import { getResolutionUrls, getM3u8Data, processName } from "../get";
 import { initVideo } from "./Play";
 import { downloadVideo } from "../download";
 
+const idList: string[] = [];
+
 export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) => {
   let parentElement: any = document.querySelector("#video-page-wrapper")?.children[1];
-  if (parentElement) {
-    if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
-
-    const title = processName(data.data.video_page.released_at, document.title);
-    let videoId = document.URL.split("video/")[1];
-    if (!videoId) videoId = document.URL.split("live/")[1];
-
-    const m3u8 = await getM3u8Data(videoId);
-    addPageDOM(title, parentElement, m3u8);
-
+  if (!parentElement) {
+    if (retry++ <= 5) {
+      setTimeout(() => videoPageDOM(data, retry), 400);
+    };
     return;
   }
-  if (retry++ > 5) return;
+  if (parentElement.querySelector("#downloadDOM")) return;
 
-  setTimeout(() => {
-    videoPageDOM(data, retry);
-  }, 300);
+  const title = processName(data.data.video_page.released_at, document.title);
+  let videoId;
+  for (const item of ["video/", "live/", "audio/"]) {
+    if (videoId) break;
+    videoId = document.URL.split(item)[1];
+  }
+  if (!videoId || idList.includes(videoId)) return;
+
+  const m3u8 = await getM3u8Data(videoId, document.URL.includes("audio/"));
+  if (m3u8.includes("Error")) {
+    idList.push("videoId");
+    return;
+  };
+
+  if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
+  addPageDOM(title, parentElement, m3u8);
 };
 
 const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: string) => {
-  if (document.querySelector("#downloadDOM")) return;
+  if (parentElement.querySelector("#downloadDOM")) return;
+
   const firstElement = parentElement.children[0];
   const dom = createDivBox();
   dom.id = "downloadDOM";
@@ -38,6 +48,9 @@ const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: stri
     urls: getResolutionUrls(m3u8Data)
   };
 
+  if (!m3u8.urls.length) {
+    m3u8.urls.push({ resolution: "audio", url: m3u8Data });
+  }
   dom.appendChild(sharpnessSelectDOM(m3u8));
   dom.appendChild(createDOM("play", () => {
     const DOM = document.querySelector("#video-player-wrapper") as HTMLDivElement;
@@ -71,7 +84,7 @@ const sharpnessSelectDOM = (m3u8: M3u8) => {
   select.innerHTML = m3u8.urls.reduce((result, value, index) => {
     const [left, right] = value.resolution.split("x");
     result += `<option value="${index}" ${index === 0 ? "selected" : ""}>
-      ${right}p
+    ${right ? `${right}p` : `${left}`}
     </option>`;
     return result;
   }, "");

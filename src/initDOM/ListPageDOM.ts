@@ -2,29 +2,41 @@ import { downloadVideo } from "../download";
 import { getList, processName } from "../get";
 import { createDivBox, createDOM, createInput, progress } from "./create";
 
-export const listPageDOM = (data: Data, retry = 0) => {
+let listData: ListData = {
+  list: {},
+  total: 0
+};
+
+export const listPageDOM = (data: VideoData, retry = 0) => {
   const type = document.URL.split("/").at(-1)!.replace(/\?.*/, "");
-  if (!data.data?.video_pages?.total || !["videos", "lives"].some(p => p === type)) return;
-  
+  const liveEndTime = data.data?.video_pages?.list[0].live_scheduled_end_at || data.data?.video_pages?.list[0].live_finished_at;
+  if (!data.data?.video_pages?.total
+    || !["videos", "lives"].some(p => p === type)
+    || !compareTime(liveEndTime)
+  ) return;
+
   const parentElement = document.querySelector(".MuiBox-root")!.children[1].children[0].children[0];
   const list = parentElement.querySelector(".infinite-scroll-component")?.children[0];
-
-  if (parentElement && list) {
-    updateListData(data.data.video_pages);
-    let countDOM: HTMLDivElement = document.querySelector("#downloadCount")!;;
-    if (!countDOM) {
-      addPageDOM(parentElement as HTMLDivElement, type);
-      countDOM = document.querySelector("#downloadCount")!.children[0] as HTMLDivElement;
-      addListInputDOM(list as HTMLDivElement, countDOM, type);
-    }
-
+  if (!parentElement || !list) {
+    if (retry++ <= 5) {
+      setTimeout(() => listPageDOM(data, retry), 400);
+    };
     return;
   }
-  if (retry++ > 5) return;
 
-  setTimeout(() => {
-    listPageDOM(data, retry);
-  }, 300);
+  let countDOM: HTMLDivElement = document.querySelector("#downloadCount")!;;
+  if (!countDOM && listData.total > 0) {
+    listData = {
+      list: {},
+      total: 0
+    };
+  }
+  updateListData(data.data.video_pages);
+
+  if (!countDOM) {
+    countDOM = addPageDOM(parentElement as HTMLDivElement, type);
+    addListInputDOM(list as HTMLDivElement, countDOM, type);
+  }
 };
 
 const addPageDOM = (parentElement: HTMLDivElement, type: string) => {
@@ -34,7 +46,7 @@ const addPageDOM = (parentElement: HTMLDivElement, type: string) => {
   const tip = createDivBox(margin);
   const dom = createDivBox(type === "lives" ? "0" : "0 0 0 0.75rem");
 
-  tip.appendChild(createDOM("默认下载最高画质,会跳过已下载的文件"));
+  tip.appendChild(createDOM("默认最高画质,会跳过已下载文件"));
   tip.appendChild(createDOM("点击查看支持浏览器", () => {
     window.open("https://caniuse.com/?search=showDirectoryPicker", "_blank");
   }));
@@ -44,7 +56,7 @@ const addPageDOM = (parentElement: HTMLDivElement, type: string) => {
   }));
 
   dom.appendChild(createDOM("全部下载", async () => {
-    if (Object.keys(listData.list).length !== listData.total) {
+    if (Object.keys(listData.list).length < listData.total) {
       const list = await getList(type, Math.ceil(listData.total / 100));
       updateListData({ list, total: listData.total });
     }
@@ -58,6 +70,8 @@ const addPageDOM = (parentElement: HTMLDivElement, type: string) => {
 
   parentElement.insertBefore(tip, firstElement);
   parentElement.insertBefore(dom, firstElement);
+
+  return countDOM.children[0] as HTMLDivElement;
 };
 
 const addListInputDOM = (parentElement: HTMLDivElement, countDOM: HTMLDivElement, type: string) => {
@@ -88,14 +102,9 @@ const addListInputDOM = (parentElement: HTMLDivElement, countDOM: HTMLDivElement
   listDOM.forEach(p => addInputFun(p));
 };
 
-const listData: ListData = {
-  list: {},
-  total: 0
-};
-
 const updateListData = (data: Video_pages) => {
   data.list.reduce((result, value) => {
-    const title = processName(value.display_date, value.title);
+    const title = processName(value.released_at, value.title);
     result[value.thumbnail_url + value.title] = { title, id: value.content_code, isDown: false };
 
     return result;
@@ -147,9 +156,17 @@ const listenerDOMAdd = (dom: HTMLDivElement, fun: Function) => {
 
   return observer;
 };
+/**
+ * 判断当前时间是否大于传入的时间
+ */
+const compareTime = (targetTimeStr: string) => {
+  const currentTime = new Date();
+  const targetTime = new Date(targetTimeStr);
+  return currentTime > targetTime;
+};
 
 
-type Data = {
+type VideoData = {
   data: {
     video_pages: Video_pages;
   };
@@ -160,6 +177,8 @@ type Video_pages = {
     content_code: string;
     display_date: string;
     live_finished_at: string;
+    live_scheduled_end_at: string;
+    live_scheduled_start_at: string;
     released_at: string;
     start_with_free_part_flg: boolean;
     thumbnail_url: string;

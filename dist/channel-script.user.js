@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.51
+// @version      1.3.52
 // @author       bambooGHT
-// @description  添加url
+// @description  改了一下判断逻辑
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -2050,8 +2050,10 @@ video::-webkit-media-text-track-display {
     return { urls, key };
   };
   const getKey = async (m3u8Data) => {
-    const [url] = m3u8Data.match(new RegExp('(?<=URI=")[^"]+(?=")'));
-    return await (await fetch(url, {
+    const url = m3u8Data.match(new RegExp('(?<=URI=")[^"]+(?=")'));
+    if (!url)
+      return null;
+    return await (await fetch(url[0], {
       headers: {
         Accept: "application/json, text/plain, */*"
       }
@@ -2082,12 +2084,18 @@ video::-webkit-media-text-track-display {
     }
     return `${(size / Math.pow(bye, i)).toFixed(2)}${aMultiples[i]}`;
   };
-  const getM3u8Data = async (id) => {
+  const getM3u8Data = async (id, isAudio) => {
+    if (isAudio)
+      return getM3u8DataToAudio(id);
     const url = `${window.apiPrefix}fc/video_pages/${id}/session_ids`;
     const { data: { session_id } } = await req(url, "POST");
     const url2 = `https://hls-auth.cloud.stream.co.jp/auth/index.m3u8?session_id=${session_id}`;
     const m3u8Data = await (await fetch(url2)).text();
     return m3u8Data;
+  };
+  const getM3u8DataToAudio = async (id) => {
+    const { data: { resource } } = await req(`${window.apiPrefix}fc/video_pages/${id}/content_access`, "GET");
+    return resource;
   };
   const getM3u8HighUrl = async (id) => {
     const m3u8Data = await getM3u8Data(id);
@@ -2361,7 +2369,7 @@ video::-webkit-media-text-track-display {
     input.style.top = "0";
     input.style.right = "0";
     input.style.margin = "12px";
-    input.style.zIndex = "99999";
+    input.style.zIndex = "1050";
     return input;
   };
   const initVideo = (m3u8Data, element) => {
@@ -2469,7 +2477,10 @@ video::-webkit-media-text-track-display {
     const { urls, key } = m3u8UrlData;
     const downAndDecryptFun = async (url, retryCount = 0) => {
       try {
-        const uint8Array = decrypt(await (await fetch(url)).arrayBuffer(), key);
+        const data = await (await fetch(url)).arrayBuffer();
+        if (!key)
+          return new Uint8Array(data);
+        const uint8Array = decrypt(data, key);
         updateProgress.update(uint8Array.byteLength);
         return uint8Array;
       } catch (error) {
@@ -2501,28 +2512,38 @@ video::-webkit-media-text-track-display {
     const saveDir = await dir.getDirectoryHandle(name, { create: true });
     return saveDir;
   };
+  const idList = [];
   const videoPageDOM = async (data, retry = 0) => {
     var _a;
     let parentElement = (_a = document.querySelector("#video-page-wrapper")) == null ? void 0 : _a.children[1];
-    if (parentElement) {
-      if (parentElement.querySelector(":scope>button"))
-        parentElement = parentElement.children[2];
-      const title = processName(data.data.video_page.released_at, document.title);
-      let videoId = document.URL.split("video/")[1];
-      if (!videoId)
-        videoId = document.URL.split("live/")[1];
-      const m3u8 = await getM3u8Data(videoId);
-      addPageDOM$1(title, parentElement, m3u8);
+    if (!parentElement) {
+      if (retry++ <= 5) {
+        setTimeout(() => videoPageDOM(data, retry), 400);
+      }
       return;
     }
-    if (retry++ > 5)
+    if (parentElement.querySelector("#downloadDOM"))
       return;
-    setTimeout(() => {
-      videoPageDOM(data, retry);
-    }, 300);
+    const title = processName(data.data.video_page.released_at, document.title);
+    let videoId;
+    for (const item of ["video/", "live/", "audio/"]) {
+      if (videoId)
+        break;
+      videoId = document.URL.split(item)[1];
+    }
+    if (!videoId || idList.includes(videoId))
+      return;
+    const m3u8 = await getM3u8Data(videoId, document.URL.includes("audio/"));
+    if (m3u8.includes("Error")) {
+      idList.push("videoId");
+      return;
+    }
+    if (parentElement.querySelector(":scope>button"))
+      parentElement = parentElement.children[2];
+    addPageDOM$1(title, parentElement, m3u8);
   };
   const addPageDOM$1 = (title, parentElement, m3u8Data) => {
-    if (document.querySelector("#downloadDOM"))
+    if (parentElement.querySelector("#downloadDOM"))
       return;
     const firstElement = parentElement.children[0];
     const dom = createDivBox();
@@ -2532,6 +2553,9 @@ video::-webkit-media-text-track-display {
       currentIndex: 0,
       urls: getResolutionUrls(m3u8Data)
     };
+    if (!m3u8.urls.length) {
+      m3u8.urls.push({ resolution: "audio", url: m3u8Data });
+    }
     dom.appendChild(sharpnessSelectDOM(m3u8));
     dom.appendChild(createDOM("play", () => {
       const DOM = document.querySelector("#video-player-wrapper");
@@ -2560,7 +2584,7 @@ video::-webkit-media-text-track-display {
     select.innerHTML = m3u8.urls.reduce((result, value, index) => {
       const [left, right] = value.resolution.split("x");
       result += `<option value="${index}" ${index === 0 ? "selected" : ""}>
-      ${right}p
+    ${right ? `${right}p` : `${left}`}
     </option>`;
       return result;
     }, "");
@@ -2569,28 +2593,36 @@ video::-webkit-media-text-track-display {
     };
     return select;
   };
+  let listData = {
+    list: {},
+    total: 0
+  };
   const listPageDOM = (data, retry = 0) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f, _g;
     const type = document.URL.split("/").at(-1).replace(/\?.*/, "");
-    if (!((_b = (_a = data.data) == null ? void 0 : _a.video_pages) == null ? void 0 : _b.total) || !["videos", "lives"].some((p) => p === type))
+    const liveEndTime = ((_b = (_a = data.data) == null ? void 0 : _a.video_pages) == null ? void 0 : _b.list[0].live_scheduled_end_at) || ((_d = (_c = data.data) == null ? void 0 : _c.video_pages) == null ? void 0 : _d.list[0].live_finished_at);
+    if (!((_f = (_e = data.data) == null ? void 0 : _e.video_pages) == null ? void 0 : _f.total) || !["videos", "lives"].some((p) => p === type) || !compareTime(liveEndTime))
       return;
     const parentElement = document.querySelector(".MuiBox-root").children[1].children[0].children[0];
-    const list = (_c = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _c.children[0];
-    if (parentElement && list) {
-      updateListData(data.data.video_pages);
-      let countDOM = document.querySelector("#downloadCount");
-      if (!countDOM) {
-        addPageDOM(parentElement, type);
-        countDOM = document.querySelector("#downloadCount").children[0];
-        addListInputDOM(list, countDOM, type);
+    const list = (_g = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _g.children[0];
+    if (!parentElement || !list) {
+      if (retry++ <= 5) {
+        setTimeout(() => listPageDOM(data, retry), 400);
       }
       return;
     }
-    if (retry++ > 5)
-      return;
-    setTimeout(() => {
-      listPageDOM(data, retry);
-    }, 300);
+    let countDOM = document.querySelector("#downloadCount");
+    if (!countDOM && listData.total > 0) {
+      listData = {
+        list: {},
+        total: 0
+      };
+    }
+    updateListData(data.data.video_pages);
+    if (!countDOM) {
+      countDOM = addPageDOM(parentElement, type);
+      addListInputDOM(list, countDOM, type);
+    }
   };
   const addPageDOM = (parentElement, type) => {
     const margin = type === "lives" ? "0 0 0.4rem 0" : "0 0 0.4rem 0.75rem";
@@ -2598,7 +2630,7 @@ video::-webkit-media-text-track-display {
     const firstElement = parentElement.children[index];
     const tip = createDivBox(margin);
     const dom = createDivBox(type === "lives" ? "0" : "0 0 0 0.75rem");
-    tip.appendChild(createDOM("默认下载最高画质,会跳过已下载的文件"));
+    tip.appendChild(createDOM("默认最高画质,会跳过已下载文件"));
     tip.appendChild(createDOM("点击查看支持浏览器", () => {
       window.open("https://caniuse.com/?search=showDirectoryPicker", "_blank");
     }));
@@ -2606,7 +2638,7 @@ video::-webkit-media-text-track-display {
       downloadHandler(parentElement, false, margin, index);
     }));
     dom.appendChild(createDOM("全部下载", async () => {
-      if (Object.keys(listData.list).length !== listData.total) {
+      if (Object.keys(listData.list).length < listData.total) {
         const list = await getList(type, Math.ceil(listData.total / 100));
         updateListData({ list, total: listData.total });
       }
@@ -2617,6 +2649,7 @@ video::-webkit-media-text-track-display {
     dom.appendChild(countDOM);
     parentElement.insertBefore(tip, firstElement);
     parentElement.insertBefore(dom, firstElement);
+    return countDOM.children[0];
   };
   const addListInputDOM = (parentElement, countDOM, type) => {
     let i = 0;
@@ -2642,13 +2675,9 @@ video::-webkit-media-text-track-display {
     const listDOM = Array.from(parentElement.children);
     listDOM.forEach((p) => addInputFun(p));
   };
-  const listData = {
-    list: {},
-    total: 0
-  };
   const updateListData = (data) => {
     data.list.reduce((result, value) => {
-      const title = processName(value.display_date, value.title);
+      const title = processName(value.released_at, value.title);
       result[value.thumbnail_url + value.title] = { title, id: value.content_code, isDown: false };
       return result;
     }, listData.list);
@@ -2692,6 +2721,11 @@ video::-webkit-media-text-track-display {
     };
     observer.observe(dom, { childList: true });
     return observer;
+  };
+  const compareTime = (targetTimeStr) => {
+    const currentTime = /* @__PURE__ */ new Date();
+    const targetTime = new Date(targetTimeStr);
+    return currentTime > targetTime;
   };
   style();
   script();

@@ -67,7 +67,10 @@ const downloadStream = async (m3u8UrlData: M3u8UrlData, updateProgress: Progress
   const { urls, key } = m3u8UrlData;
   const downAndDecryptFun = async (url: string, retryCount = 0): Promise<Uint8Array> => {
     try {
-      const uint8Array = decrypt(await (await fetch(url)).arrayBuffer(), key);
+      const data = await (await fetch(url)).arrayBuffer();
+      if (!key) return new Uint8Array(data);
+      
+      const uint8Array = decrypt(data, key);
       updateProgress.update(uint8Array.byteLength);
       return uint8Array;
     } catch (error) {

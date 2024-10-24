@@ -92,7 +92,7 @@ export const createInput = (type: string) => {
   input.style.top = "0";
   input.style.right = "0";
   input.style.margin = "12px";
-  input.style.zIndex = "99999";
+  input.style.zIndex = "1050";
 
   return input;
 };

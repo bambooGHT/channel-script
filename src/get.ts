@@ -10,8 +10,9 @@ export const getDownloadUrlListAndKey = async (url: string) => {
 };
 
 export const getKey = async (m3u8Data: string) => {
-  const [url] = m3u8Data.match(/(?<=URI=")[^"]+(?=")/)!;
-  return await (await fetch(url, {
+  const url = m3u8Data.match(/(?<=URI=")[^"]+(?=")/)!;
+  if (!url) return null;
+  return await (await fetch(url[0], {
     headers: {
       Accept: "application/json, text/plain, */*"
     }
@@ -21,7 +22,6 @@ export const getKey = async (m3u8Data: string) => {
 export const getResolutionUrls = (m3u8Data: string) => {
   const urlArray = m3u8Data.split("\n").filter(s => s.includes("https"));
   const RESOLUTIONS = m3u8Data.split("\n").filter(s => s.includes("RESOLUTION"));
-
   return RESOLUTIONS.reduce((result: ResolutionUrls, p, index) => {
     const [resolution] = p.match(/(?<=RESOLUTION=).*?(?=,)/)!;
     result.push({
@@ -47,15 +47,19 @@ export const clacSize = (size: number) => {
   return `${(size / Math.pow(bye, i)).toFixed(2)}${aMultiples[i]}`;
 };
 
-export const getM3u8Data = async (id: string) => {
+export const getM3u8Data = async (id: string, isAudio?: boolean) => {
+  if (isAudio) return getM3u8DataToAudio(id);
+
   const url = `${window.apiPrefix}fc/video_pages/${id}/session_ids`;
-
   const { data: { session_id } } = await req(url, "POST");
-
   const url2 = `https://hls-auth.cloud.stream.co.jp/auth/index.m3u8?session_id=${session_id}`;
   const m3u8Data = await (await fetch(url2)).text();
 
   return m3u8Data;
+};
+const getM3u8DataToAudio = async (id: string) => {
+  const { data: { resource } } = await req(`${window.apiPrefix}fc/video_pages/${id}/content_access`, "GET");
+  return resource;
 };
 
 export const getM3u8HighUrl = async (id: string) => {
