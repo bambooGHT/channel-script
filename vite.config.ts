@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.52",
-        description: "改了一下判断逻辑",
+        version: "1.3.54",
+        description: "添加url",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",
@@ -21,7 +21,9 @@ export default defineConfig({
           "https://rizuna-official.com/*",
           "https://uise-official.com/*",
           "https://tenshi-nano.com/*",
-          "https://malice-kibana.com/*"
+          "https://malice-kibana.com/*",
+          "https://sheeta-d04.com/*",
+          "https://hoshino-supika.com/*"
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
         updateURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js",

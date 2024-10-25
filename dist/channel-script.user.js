@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.52
+// @version      1.3.54
 // @author       bambooGHT
-// @description  改了一下判断逻辑
+// @description  添加url
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -16,6 +16,8 @@
 // @match        https://uise-official.com/*
 // @match        https://tenshi-nano.com/*
 // @match        https://malice-kibana.com/*
+// @match        https://sheeta-d04.com/*
+// @match        https://hoshino-supika.com/*
 // ==/UserScript==
 
 (function () {
