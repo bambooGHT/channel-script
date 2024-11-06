@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.54
+// @version      1.3.55
 // @author       bambooGHT
-// @description  添加url
+// @description  只能看直播跟部分免费的视频了
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -2135,7 +2135,7 @@ video::-webkit-media-text-track-display {
       }).catch(async (error) => {
         if (++r > 1) {
           console.error(error);
-          throw new Error("请求失败");
+          return;
         }
         await updateToken();
         res(req(url, method, r));
@@ -2209,7 +2209,7 @@ video::-webkit-media-text-track-display {
     window.Authorization = "Bearer " + resData.access_token;
   };
   const updateToken1 = async () => {
-    var _a, _b;
+    var _a;
     const value = await fetch("https://api.nicochannel.jp/fc/fanclub_groups/1/auth/refresh", {
       "headers": {
         "accept": "application/json, text/plain, */*",
@@ -2233,9 +2233,7 @@ video::-webkit-media-text-track-display {
     });
     const resData = await value.json();
     console.log("req2", resData);
-    if (((_a = resData == null ? void 0 : resData.error) == null ? void 0 : _a.message) === "record not found") {
-      window.isError = true;
-    } else if ((_b = resData == null ? void 0 : resData.data) == null ? void 0 : _b.access_token) {
+    if ((_a = resData == null ? void 0 : resData.data) == null ? void 0 : _a.access_token) {
       window.Authorization = "Bearer " + resData.data.access_token;
     }
   };
@@ -2262,8 +2260,6 @@ video::-webkit-media-text-track-display {
       for (const item of conditions) {
         if (_url.includes(item.value)) {
           this.addEventListener("load", async function() {
-            if (window.isError)
-              return;
             window.apiPrefix = _url.split("fc/")[0];
             const data = JSON.parse(this.response);
             item.callback(data);
@@ -2600,13 +2596,13 @@ video::-webkit-media-text-track-display {
     total: 0
   };
   const listPageDOM = (data, retry = 0) => {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     const type = document.URL.split("/").at(-1).replace(/\?.*/, "");
-    const liveEndTime = ((_b = (_a = data.data) == null ? void 0 : _a.video_pages) == null ? void 0 : _b.list[0].live_scheduled_end_at) || ((_d = (_c = data.data) == null ? void 0 : _c.video_pages) == null ? void 0 : _d.list[0].live_finished_at);
-    if (!((_f = (_e = data.data) == null ? void 0 : _e.video_pages) == null ? void 0 : _f.total) || !["videos", "lives"].some((p) => p === type) || !compareTime(liveEndTime))
+    const liveEndTime = ((_c = (_b = (_a = data.data) == null ? void 0 : _a.video_pages) == null ? void 0 : _b.list[0]) == null ? void 0 : _c.live_scheduled_end_at) || ((_f = (_e = (_d = data.data) == null ? void 0 : _d.video_pages) == null ? void 0 : _e.list[0]) == null ? void 0 : _f.live_finished_at);
+    if (!((_h = (_g = data.data) == null ? void 0 : _g.video_pages) == null ? void 0 : _h.total) || !["videos", "lives"].some((p) => p === type) || !compareTime(liveEndTime))
       return;
     const parentElement = document.querySelector(".MuiBox-root").children[1].children[0].children[0];
-    const list = (_g = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _g.children[0];
+    const list = (_i = parentElement.querySelector(".infinite-scroll-component")) == null ? void 0 : _i.children[0];
     if (!parentElement || !list) {
       if (retry++ <= 5) {
         setTimeout(() => listPageDOM(data, retry), 400);

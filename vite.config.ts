@@ -9,8 +9,8 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.54",
-        description: "添加url",
+        version: "1.3.55",
+        description: "只能看直播跟部分免费的视频了",
         author: "bambooGHT",
         match: [
           "https://canan8181.com/*",

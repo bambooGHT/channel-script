@@ -30,7 +30,6 @@ export const listenReq = async (includesValue: string[], conditions: Condition[]
     for (const item of conditions) {
       if (_url.includes(item.value)) {
         this.addEventListener('load', async function () {
-          if (window.isError) return;
           window.apiPrefix = _url.split("fc/")[0];
           const data = JSON.parse(this.response);
           item.callback(data);

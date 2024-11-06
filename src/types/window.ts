@@ -9,7 +9,6 @@ declare global {
     apiPrefix: string;
     Authorization: string;
     fcId: string;
-    isError: boolean;
   }
 }
 

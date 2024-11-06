@@ -9,7 +9,7 @@ let listData: ListData = {
 
 export const listPageDOM = (data: VideoData, retry = 0) => {
   const type = document.URL.split("/").at(-1)!.replace(/\?.*/, "");
-  const liveEndTime = data.data?.video_pages?.list[0].live_scheduled_end_at || data.data?.video_pages?.list[0].live_finished_at;
+  const liveEndTime = data.data?.video_pages?.list[0]?.live_scheduled_end_at || data.data?.video_pages?.list[0]?.live_finished_at;
   if (!data.data?.video_pages?.total
     || !["videos", "lives"].some(p => p === type)
     || !compareTime(liveEndTime)

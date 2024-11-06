@@ -105,7 +105,7 @@ const req = (url: string, method = "GET", r = 0): Promise<any> => {
       .catch(async (error) => {
         if (++r > 1) {
           console.error(error);
-          throw new Error("请求失败");
+          return;
         }
         await updateToken();
         res(req(url, method, r));
@@ -211,9 +211,7 @@ const updateToken1 = async () => {
   const resData = await value.json();
   console.log("req2", resData);
 
-  if (resData?.error?.message === "record not found") {
-    window.isError = true;
-  } else if (resData?.data?.access_token) {
+  if (resData?.data?.access_token) {
     window.Authorization = "Bearer " + resData.data.access_token;
   }
 };
