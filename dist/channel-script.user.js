@@ -2106,7 +2106,7 @@ video::-webkit-media-text-track-display {
     return urls[0].url;
   };
   const processName = (time, title) => {
-    return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[^\x00-\x7F\u3000-\u30FF\uFF00-\uFFEF\u4E00-\u9FFF\u3040-\u309F\uAC00-\uD7AF]/g, "");
+    return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[\u200B\u200C\u200D\uFEFF\u2060\u202A-\u202E\/*?"<>|]/g, "");
   };
   const getList = async (type, len) => {
     const list = [];
