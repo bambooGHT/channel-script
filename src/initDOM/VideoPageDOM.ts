@@ -18,6 +18,7 @@ export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) =
   if (parentElement.querySelector("#downloadDOM")) return;
 
   const title = processName(data.data.video_page.released_at, document.title);
+  
   let videoId;
   for (const item of ["video/", "live/", "audio/"]) {
     if (videoId) break;

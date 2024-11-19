@@ -70,7 +70,7 @@ export const getM3u8HighUrl = async (id: string) => {
 
 
 export const processName = (time: string, title: string) => {
-  return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[/\\:?"<>|\*]/g, "");
+  return `[${time.split(" ")[0]}] ${title.replaceAll(":", ".")}.ts`.replace(/[^\x00-\x7F\u3000-\u30FF\uFF00-\uFFEF\u4E00-\u9FFF\u3040-\u309F\uAC00-\uD7AF]/g, "");
 };
 
 export const getList = async (type: string, len: number) => {
@@ -176,7 +176,6 @@ export const updateToken = async () => {
   });
 
   const resData = await req.json();
-  console.log("req1", resData);
   if (resData.error?.message === "record not found") {
     console.error(resData);
     return;
@@ -209,7 +208,6 @@ const updateToken1 = async () => {
   });
 
   const resData = await value.json();
-  console.log("req2", resData);
 
   if (resData?.data?.access_token) {
     window.Authorization = "Bearer " + resData.data.access_token;

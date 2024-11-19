@@ -23,7 +23,8 @@ export default defineConfig({
           "https://tenshi-nano.com/*",
           "https://malice-kibana.com/*",
           "https://sheeta-d04.com/*",
-          "https://hoshino-supika.com/*"
+          "https://hoshino-supika.com/*",
+          "https://nightmare-salon.com/*"
         ],
         icon: "https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp",
         updateURL: "https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js",

@@ -53,6 +53,7 @@ export const downloadVideo: DownloadVideo = async (data, progress, name) => {
   for (const item of data) {
     updateProgress.updateIndex();
     const is = await isExists(item.title);
+    
     if (is) updateProgress.skip();
     else {
       const url = await getM3u8HighUrl(item.id);
@@ -69,7 +70,7 @@ const downloadStream = async (m3u8UrlData: M3u8UrlData, updateProgress: Progress
     try {
       const data = await (await fetch(url)).arrayBuffer();
       if (!key) return new Uint8Array(data);
-      
+
       const uint8Array = decrypt(data, key);
       updateProgress.update(uint8Array.byteLength);
       return uint8Array;
