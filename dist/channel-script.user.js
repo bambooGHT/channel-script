@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.55
+// @version      1.3.60
 // @author       bambooGHT
 // @description  只能看直播跟部分免费的视频了
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp

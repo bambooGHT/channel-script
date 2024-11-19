@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.55",
+        version: "1.3.60",
         description: "只能看直播跟部分免费的视频了",
         author: "bambooGHT",
         match: [
