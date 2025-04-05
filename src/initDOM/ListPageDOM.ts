@@ -79,8 +79,7 @@ const addListInputDOM = (parentElement: HTMLDivElement, countDOM: HTMLDivElement
 
   const addInputFun = (dom: HTMLDivElement) => {
     dom.style.position = "relative";
-    const domClass = type === "lives" ? ".MuiTypography-subtitle2" : ".MuiTypography-colorTextPrimary";
-    const textDOM = (<HTMLDivElement>dom.querySelector(domClass));
+    const textDOM = (<HTMLDivElement>dom.querySelector(".MuiTypography-subtitle2"));
 
     const title = textDOM.innerText;
     const input = createInput("checkbox");
