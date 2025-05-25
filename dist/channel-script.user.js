@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.70
+// @version      1.3.80
 // @author       bambooGHT
-// @description  修复视频页面不显示下载按钮的问题,修复videos页面不显示选择按钮的问题
+// @description  修复会员限定的视频不显示下载按钮的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
 // @downloadURL  https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
 // @updateURL    https://github.com/bambooGHT/channel-script/raw/main/dist/channelScript.user.js
@@ -2169,7 +2169,7 @@ video::-webkit-media-text-track-display {
       "Accept": "application/json, text/plain, */*",
       "Fc_site_id": window.fcId || "16",
       "Fc_use_device": "null",
-      // Authorization: window.Authorization,
+      Authorization: window.Authorization,
       "Content-Type": "application/json"
     };
     return headersData;

@@ -141,7 +141,7 @@ const getHeaders = () => {
     'Accept': 'application/json, text/plain, */*',
     'Fc_site_id': window.fcId || "16",
     'Fc_use_device': 'null',
-    // Authorization: window.Authorization,
+    Authorization: window.Authorization,
     "Content-Type": "application/json"
   };
   return headersData;
