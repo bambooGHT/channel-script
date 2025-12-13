@@ -8,7 +8,10 @@ import { downloadVideo } from "../download";
 const idList: string[] = [];
 
 export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) => {
-  let parentElement: any = document.querySelector("#video-page-wrapper")?.children[1];
+  let parentElement =
+    document.querySelector(".VideoDescription-wrapper.css-1ylhvm3")
+    || document.querySelector("#video-page-wrapper")?.children[1];
+
   if (!parentElement) {
     if (retry++ <= 5) {
       setTimeout(() => videoPageDOM(data, retry), 400);
@@ -18,7 +21,7 @@ export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) =
   if (parentElement.querySelector("#downloadDOM")) return;
 
   const title = processName(data.data.video_page.released_at, document.title);
-  
+
   let videoId;
   for (const item of ["video/", "live/", "audio/"]) {
     if (videoId) break;
@@ -33,7 +36,7 @@ export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) =
   };
 
   if (parentElement.querySelector(":scope>button")) parentElement = parentElement.children[2];
-  addPageDOM(title, parentElement, m3u8);
+  addPageDOM(title, parentElement as HTMLDivElement, m3u8);
 };
 
 const addPageDOM = (title: string, parentElement: HTMLDivElement, m3u8Data: string) => {

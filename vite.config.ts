@@ -9,7 +9,7 @@ export default defineConfig({
       userscript: {
         name: "channel-script",
         namespace: "https://github.com/bambooGHT",
-        version: "1.3.80",
+        version: "1.3.81",
         description: "修复会员限定的视频不显示下载按钮的问题",
         author: "bambooGHT",
         match: [

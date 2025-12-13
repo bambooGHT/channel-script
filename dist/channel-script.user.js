@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         channel-script
 // @namespace    https://github.com/bambooGHT
-// @version      1.3.80
+// @version      1.3.81
 // @author       bambooGHT
 // @description  修复会员限定的视频不显示下载按钮的问题
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=nicochannel.jp
@@ -2512,7 +2512,7 @@ video::-webkit-media-text-track-display {
   const idList = [];
   const videoPageDOM = async (data, retry = 0) => {
     var _a;
-    let parentElement = (_a = document.querySelector("#video-page-wrapper")) == null ? void 0 : _a.children[1];
+    let parentElement = document.querySelector(".VideoDescription-wrapper.css-1ylhvm3") || ((_a = document.querySelector("#video-page-wrapper")) == null ? void 0 : _a.children[1]);
     if (!parentElement) {
       if (retry++ <= 5) {
         setTimeout(() => videoPageDOM(data, retry), 400);
