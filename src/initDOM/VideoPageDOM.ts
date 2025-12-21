@@ -9,7 +9,7 @@ const idList: string[] = [];
 
 export const videoPageDOM: ListenReqFun = async (data: VideoStatus, retry = 0) => {
   let parentElement =
-    document.querySelector(".VideoDescription-wrapper.css-1ylhvm3")
+    document.querySelector(".VideoDescription-wrapper")
     || document.querySelector("#video-page-wrapper")?.children[1];
 
   if (!parentElement) {
